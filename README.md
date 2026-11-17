@@ -1,45 +1,42 @@
 # TCAD-in-CNT
 
-面向**碳纳米管场效应晶体管（CNTFET）与碳基 CMOS 集成电路总电离剂量（TID）效应**的可复现仿真项目。当前版本打通“器件剂量扫描 → 电学退化 → 反相器静态特性”的最小闭环，并提供已在 Sentaurus W-2024.09 虚拟机中验证的 SDE/SDevice 冒烟接口。
+面向**碳纳米管场效应晶体管（CNTFET）与碳基 CMOS 集成电路总电离剂量（TID）效应**的可复现仿真项目。当前版本打通"文献锚定标定 → 器件/反相器/环振退化 → 全链条不确定性量化 → 跨结构迁移预测 → 退火情景"的完整链路，并提供已在 Sentaurus W-2024.09 虚拟机中验证的 SDE/SDevice 冒烟接口与 CNTFET deck 生成器。
 
-> **模型范围：当前版本实现“剂量—陷阱电荷—紧凑电学参数—电路响应”的等效链路。** 默认剂量系数用于流程验证，器件寿命与抗辐射指标的定量评估以实验或 TCAD 标定为前提。
+> **模型范围：**"剂量—陷阱电荷—紧凑电学参数—电路响应"为经文献图表标定的等效紧凑模型（`calibrated_compact_fit_metrics`），不是器件预测；退火与剂量率为显式假设情景。器件寿命与抗辐射指标的定量评估以实验或 TCAD 标定为前提。
 
-## P0 结项成果（v0.5.0）
-
-P0 的"明确结构 + 可追溯 TID 参数 + 器件/反相器剂量扫描 + 标定/敏感性 + 可复现图表"已经用一条命令闭环：
+## P0 结项成果（v0.11.0）
 
 ```bash
-cnt-tid p0
+cnt-tid p0        # 主线：标定 → 扫描 → 验证 → 图 1–3、11 + manifest
+cnt-tid all       # 一键全量重建：p0 → 蒙特卡洛 → 迁移预测 → 退火情景（约 6 分钟）
 ```
 
 | 环节 | 产物 |
 | --- | --- |
 | 结构冻结 | `configs/p0/cntfet_tid_p0.toml`、[图 1](docs/figures/p0/fig1_structure.png)、`data/parameters/tid_parameters.csv` |
 | 参数溯源 | `scripts/digitize_cui2023_fig3.py` → `data/literature/cui2023_topgate/fig3_metrics_digitized.csv` → `results/p0/parameters_resolved.csv` |
-| 标定/验证 | [图 2](docs/figures/p0/fig2_validation.png)、`results/p0/calibration/` |
-| 器件+反相器扫描 | [图 3](docs/figures/p0/fig3_inverter.png)、`results/p0/dose_sweep/` |
-| 敏感性/不确定性 | [图 4](docs/figures/p0/fig4_sensitivity.png)、[图 5](docs/figures/p0/fig5_robustness.png) |
-| 跨文献校验 | [图 6](docs/figures/p0/fig6_cross_source.png)、`results/p0/cross_source/` |
-| 可复现 | `results/p0/manifest.json`（输入与全部输出的 SHA-256） |
+| 标定/验证 | [图 2](docs/figures/p0/fig2_validation.png)（含两阶段摆幅分解）、`results/p0/calibration/` |
+| 器件+反相器扫描 | [图 3](docs/figures/p0/fig3_inverter.png)、[图 11](docs/figures/p0/fig11_device_family.png)、`results/p0/dose_sweep/` |
+| 敏感性/不确定性 | [图 4](docs/figures/p0/fig4_sensitivity.png)、[图 5](docs/figures/p0/fig5_robustness.png)、**[图 8](docs/figures/p0/fig8_mc.png)（全链条蒙特卡洛置信带，`cnt-tid mc`）** |
+| 跨文献校验与迁移 | [图 6](docs/figures/p0/fig6_cross_source.png)、**[图 9](docs/figures/p0/fig9_prediction_bands.png)（结构迁移预测器，`cnt-tid predict`）** |
+| 电路级退化 | **[图 7](docs/figures/p0/fig7_ringosc.png)（准静态环振，`cnt-tid ringosc`）**、**[图 10](docs/figures/p0/fig10_annealing.png)（退火情景，`cnt-tid anneal`）** |
+| 可复现 | `results/p0/manifest.json`；一键全量重建的总清单 `results/deliverable/deliverable_manifest.json`（`cnt-tid all`） |
 
-关键结果：幂律剂量指数 p = 0.482，Q_it = 8.90 × 10⁻⁹、Q_ot = 2.22 × 10⁻⁸ C/cm²/krad^p，3 Mrad(Si) 下 |ΔVth| = 1.108 V；反相器 VM 由 1.000 V 塌到 0.129 V，NML/NMH 损失 84 %/71 %。阈值残差 ≤ 42 mV，留一剂量点残差 ≤ 66 mV。
+关键结果：剂量律指数 p = 0.482；3 Mrad(Si) 下 |ΔVth| = 1.108 V、反相器 VM 1.000 → 0.133 V；摆幅两阶段律（生成 − 退火）复现 200 krad 谷，残差 27.7 → **17.9 mV/dec**（全点 ≤1.1σ）；**11 级环振频率坍缩 10.6×（4.23 MHz → 399 kHz），静态功耗 ×385**；蒙特卡洛给出电路级数字的 5–95 % 置信带（VM@3Mrad 0.024–0.308 V——电路级结论高度条件于假设）；跨结构指数 0.23–0.85，单锚点迁移后类别带每 10 倍剂量仍有 **4.1×** 形状不确定性。**TID 参数必须绑定结构。**
 
-跨文献校验（Cui 2023 + Kanhaiya 2021，7 个器件变体，0.1–10 Mrad）表明：剂量律的指数随结构在 **0.23–0.85** 之间变化，把一条拟合律迁移到另一个结构、即使锚定一个实测点仍有 **2–5 倍**误差。**TID 参数必须绑定结构**，不能作为器件无关常数引用。
-
-完整推导、验证与局限见 **[P0 结项报告](docs/p0-report.md)**。所有结果标注 `calibrated_compact_fit_metrics`，即"经文献图表标定的等效紧凑模型"，而不是器件预测。
+完整推导、验证与局限见 **[P0 结项报告](docs/p0-report.md)**。
 
 ## 当前能力
 
-- 以氧化层陷阱电荷 `Qot` 和界面陷阱电荷 `Qit` 驱动阈值漂移；
-- 用剂量相关迁移率和斜率因子描述驱动能力及亚阈值特性退化；
-- 扫描 n/p CNTFET 转移特性，输出 `Ion`、`Ioff`、最大跨导等指标；
-- 求解互补 CNTFET 反相器 VTC，提取 `VM`、`VIL`、`VIH`、`NML`、`NMH`；
-- **标定模式**：从 `data/calibration_template.csv` 格式的实测/TCAD 曲线拟合剂量系数，含留一剂量点交叉验证，输出可直接回灌的 TOML 配置；
-- **敏感性分析**：对关键参数做 ±10% 逐个扰动（OAT），输出归一化灵敏度表和龙卷风图；
-- **几何实验矩阵**：联合扫描栅氧厚度与栅长，保留每个场景的完整曲线、配置指纹、警告与失败日志；
-- **TCAD 冒烟接口**：通过 `vmrun` 自动执行已验证的 SDE/SDevice 工程并回传日志；当前验证对象为硅二极管；
-- 一键输出 CSV、元数据 JSON 和 PNG 图，配置采用严格 TOML 校验；
-- 自动测试覆盖阈值漂移方向、电流边界、反相器电平、标定还原、灵敏度符号和完整运行流程。
+- 以氧化层陷阱电荷 `Qot` 和界面陷阱电荷 `Qit` 驱动阈值漂移（幂律 Q = k·D^p）；
+- **两阶段摆幅通道**：界面态密度 = 生成幂律 − 饱和退火，复现 200 krad 摆幅谷；与阈值电荷通道解耦；
+- 器件转移特性（`Ion`/`Ioff`/Gm）、互补反相器 VTC（`VM`/`VIL`/`VIH`/`NML`/`NMH`）、**准静态环振频率与功耗预算**（`cnt-tid ringosc`）；
+- **辐照后退火情景**（`cnt-tid anneal`）：注册表假设的分式指数恢复，VM/摆幅/频率的恢复曲线；
+- **全链条蒙特卡洛**（`cnt-tid mc`）：registry 假设三角采样 + 数字化误差棒正态采样 → 关键数字的置信区间，失败抽样如实计数；
+- **结构迁移预测器**（`cnt-tid predict`）：每变体 |ΔVt|(D) 预测 + 架构类别包络带 + 外推标记；
+- 标定模式（曲线级 + 指标级两条路径，含留一交叉验证）、敏感性分析、几何实验矩阵；
+- **TCAD 集成**：冒烟链路、CNTFET deck 生成（`tcad-prepare`，REQUIRED 已按溯源补齐）、零剂量对齐门禁（`tcad-align`，<20 %）；
+- 一键输出 CSV/JSON/PNG，配置严格 TOML 校验；95 项自动测试 + ruff 全绿。
 
 ## 快速开始
 
@@ -166,8 +163,21 @@ CNTFET 方向已建立 Cui 2023 顶栅 P 型 CNT 网络器件的数据清单和 
 | `dose_sweep/` | 与 `run` 相同的曲线、指标、元数据与图 |
 | `validation/` | 模型与数字化文献指标的逐点对照 |
 | `sensitivity/`、`robustness/` | OAT 弹性与假设区间扫描 |
-| `figures/`、`docs/figures/p0/` | 结项图 1–5 |
+| `figures/`、`docs/figures/p0/` | 结项图 1–3、11（其余图由独立命令生成，见下） |
 | `manifest.json` | 软件版本、输入/输出 SHA-256 |
+
+### 结项扩展命令（v0.8.0–v0.11.0）
+
+```bash
+cnt-tid ringosc     # 准静态 11 级环振：频率坍缩 + 静态/动态功耗（图 7）
+cnt-tid mc          # 全链条蒙特卡洛：关键数字的 5-95 % 置信带（图 8，约 4 分钟）
+cnt-tid predict     # 结构迁移预测：8 变体 |ΔVt|(D) + 架构类别包络带（图 9）
+cnt-tid anneal      # 辐照后退火情景：VM/摆幅/频率恢复曲线（图 10）
+cnt-tid all         # 一键全量重建 + 总清单 deliverable_manifest.json
+cnt-tid tcad-align  # TCAD 零剂量曲线 vs 紧凑模型 <20 % 门禁
+```
+
+每个命令把假设与溯源写进产物元数据；`mc` 与 `anneal` 的数字是显式假设情景，引用时必须连同假设值一起引用。
 
 ## 仓库结构
 

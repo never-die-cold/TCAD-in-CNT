@@ -21,6 +21,7 @@ from .calibration import (
     load_measurements,
 )
 from .config import load_config
+from .deliverable import run_deliverable
 from .matrix import run_matrix
 from .metric_calibration import load_digitized_metrics
 from .monte_carlo import plot_monte_carlo, run_monte_carlo
@@ -157,6 +158,23 @@ def build_parser() -> argparse.ArgumentParser:
     anneal_cmd.add_argument("--output", type=Path, default=Path("results/anneal"))
     anneal_cmd.add_argument(
         "--figure", type=Path, default=Path("docs/figures/p0/fig10_annealing.png")
+    )
+
+    all_cmd = subparsers.add_parser(
+        "all",
+        help="rebuild the whole deliverable: p0 -> Monte Carlo -> predict -> anneal",
+    )
+    all_cmd.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    all_cmd.add_argument("--metrics", type=Path, default=DEFAULT_METRICS)
+    all_cmd.add_argument("--output", type=Path, default=Path("results/deliverable"))
+    all_cmd.add_argument("--draws", type=int, default=200)
+    all_cmd.add_argument("--seed", type=int, default=20261118)
+    all_cmd.add_argument(
+        "--second-source", type=Path, default=Path("data/literature/kanhaiya2021/vt_shift_vs_tid.csv")
+    )
+    all_cmd.add_argument(
+        "--publish-dir", type=Path, default=Path("docs/figures/p0"),
+        help="copy the p0 figure set here; results/ is not tracked by git",
     )
 
     tcad_cmd = subparsers.add_parser(
@@ -399,6 +417,31 @@ def _cmd_anneal(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_all(args: argparse.Namespace) -> int:
+    destination = run_deliverable(
+        args.registry,
+        args.metrics,
+        args.output,
+        draws=args.draws,
+        seed=args.seed,
+        second_source=args.second_source,
+        publish_dir=args.publish_dir,
+    )
+    manifest = json.loads((destination / "deliverable_manifest.json").read_text(encoding="utf-8"))
+    key = manifest["stages"]["p0"]["key_numbers"]
+    print("Deliverable dashboard:")
+    print(
+        f"  Vth shift @3 Mrad: {key['vth_shift_at_max_dose_v']:.3f} V "
+        f"(p = {key['dose_exponent']:.3f}), max |dSS| {key['max_abs_ss_residual_mv']:.1f} mV/dec"
+    )
+    print(
+        f"  VM 1.000 -> {key['vm_v_at_max_dose']:.3f} V; ring {key['ro_frequency_hz_at_zero_dose']:.2e} "
+        f"-> {key['ro_frequency_hz_at_max_dose']:.2e} Hz"
+    )
+    print(f"  master manifest: {destination / 'deliverable_manifest.json'}")
+    return 0
+
+
 def _cmd_ringosc(args: argparse.Namespace) -> int:
     config = load_config(args.config)
     artifacts = write_ring_oscillator_artifacts(config, args.output)
@@ -501,6 +544,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_predict(args)
     if args.command == "anneal":
         return _cmd_anneal(args)
+    if args.command == "all":
+        return _cmd_all(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":

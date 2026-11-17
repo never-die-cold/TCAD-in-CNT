@@ -35,8 +35,10 @@ from .cross_source import (
     load_vt_shift,
     transfer_error,
 )
-from .device import state_at_dose
+from .device import drain_current, state_at_dose
 from .metric_calibration import (
+    PROBE_VDS_V,
+    PROBE_VGS_MAX_V,
     MetricCalibration,
     calibrate_from_metrics,
     calibration_payload,
@@ -46,6 +48,7 @@ from .metric_calibration import (
 from .p0_plots import (
     plot_assumption_sweep,
     plot_cross_source,
+    plot_device_family,
     plot_device_validation,
     plot_inverter,
     plot_ring_oscillator,
@@ -378,6 +381,26 @@ def run_p0(
 
     ring = write_ring_oscillator_artifacts(config, output / "ring_oscillator")
 
+    # Device-level Id-Vg family at the paper's measurement condition
+    # (|VDS| = 0.1 V): the calibrated metrics pin three points per dose, the
+    # curve shape between them is a model output and is published as such.
+    vgs_grid = np.linspace(0.0, PROBE_VGS_MAX_V, 401)
+    family_rows = []
+    for dose in config.doses_krad:
+        state = state_at_dose(config.p_device, dose, config.temperature_k)
+        current = drain_current(state, vgs_grid, PROBE_VDS_V)
+        family_rows.append(
+            pd.DataFrame(
+                {
+                    "dose_krad": dose,
+                    "vgs_v": vgs_grid,
+                    "id_a": current,
+                }
+            )
+        )
+    device_family = pd.concat(family_rows, ignore_index=True)
+    device_family.to_csv(output / "device_family.csv", index=False)
+
     figures = output / "figures"
     figures.mkdir(exist_ok=True)
     plot_structure(registry, calibration, figures / "fig1_structure.png")
@@ -389,6 +412,7 @@ def run_p0(
     plot_assumption_sweep(robustness, figures / "fig5_robustness.png")
     plot_cross_source(cross_frame, cross_fits, figures / "fig6_cross_source.png")
     plot_ring_oscillator(ring.scan, figures / "fig7_ringosc.png")
+    plot_device_family(device_family, figures / "fig11_device_family.png")
 
     consistency_mv = float(
         1000.0 * (validation["vth_v_model"] - validation["vth_mag_v_check"]).abs().max()
@@ -444,6 +468,21 @@ def run_p0(
         "ro_static_power_w_at_zero_dose": float(ring.scan["static_power_w"].iloc[0]),
         "ro_static_power_w_at_max_dose": float(ring.scan["static_power_w"].iloc[-1]),
         "ro_total_power_w_at_max_dose": float(ring.scan["total_power_w"].iloc[-1]),
+        "p_ioff_a_at_zero_dose": float(
+            device_family[device_family["vgs_v"] == device_family["vgs_v"].min()]
+            .query("dose_krad == dose_krad.min()")["id_a"]
+            .iloc[0]
+        ),
+        "p_ioff_a_at_max_dose": float(
+            device_family[device_family["vgs_v"] == device_family["vgs_v"].min()]
+            .query("dose_krad == dose_krad.max()")["id_a"]
+            .iloc[0]
+        ),
+        "p_ion_a_at_max_dose": float(
+            device_family[device_family["vgs_v"] == device_family["vgs_v"].max()]
+            .query("dose_krad == dose_krad.max()")["id_a"]
+            .iloc[0]
+        ),
         "cross_source_variants": int(cross_fits.shape[0]),
         "cross_source_usable_fits": int(cross_fits["usable"].sum()),
         "cross_source_exponent_min": float(cross_fits.loc[cross_fits["usable"], "exponent"].min()),
@@ -469,6 +508,7 @@ def run_p0(
             "fig5_robustness.png",
             "fig6_cross_source.png",
             "fig7_ringosc.png",
+            "fig11_device_family.png",
         ):
             (published_dir / name).write_bytes((figures / name).read_bytes())
             published[name] = _sha256(published_dir / name)

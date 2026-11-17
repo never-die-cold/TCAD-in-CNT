@@ -422,6 +422,59 @@ def plot_ring_oscillator(scan: pd.DataFrame, path: Path) -> None:
     plt.close(fig)
 
 
+def plot_device_family(family: pd.DataFrame, path: Path) -> None:
+    """Device-level Id-Vg curve family at every dose, plus Ioff/Ion trends."""
+
+    _style()
+    doses = sorted(family["dose_krad"].unique())
+    fig, (left, right) = plt.subplots(1, 2, figsize=(10.6, 4.2), constrained_layout=True)
+    cmap = plt.get_cmap("viridis", len(doses))
+    for index, dose in enumerate(doses):
+        subset = family[family["dose_krad"] == dose].sort_values("vgs_v")
+        left.semilogy(
+            subset["vgs_v"],
+            np.maximum(subset["id_a"].to_numpy(dtype=float), 1e-30),
+            color=cmap(index),
+            linewidth=1.3,
+            label=f"{dose:g} krad",
+        )
+    left.set(
+        xlabel="|VGS| (V) at |VDS| = 0.1 V",
+        ylabel="|ID| (A)",
+        title="p-device transfer family (compact model)",
+    )
+    left.legend(fontsize=6.5, loc="lower right", ncol=2)
+
+    metrics = (
+        family[family["vgs_v"] == family["vgs_v"].min()]
+        .groupby("dose_krad")["id_a"]
+        .first()
+        .rename("ioff")
+    )
+    ion = (
+        family[family["vgs_v"] == family["vgs_v"].max()]
+        .groupby("dose_krad")["id_a"]
+        .first()
+        .rename("ion")
+    )
+    table = pd.concat([metrics, ion], axis=1)
+    right.semilogy(table.index, table["ioff"], "s-", color="#b2182b", label="Ioff (|VGS| = 0)")
+    right.semilogy(table.index, table["ion"], "^-", color="#2166ac", label="Ion (|VGS| max)")
+    right.set(
+        xlabel="Dose (krad(Si))",
+        ylabel="Current (A)",
+        title="Ioff and Ion versus dose",
+    )
+    right.legend(fontsize=7, loc="best")
+    _stamp(
+        fig,
+        "cnt-tid p0 | fig11 | device Id-Vg family and Ioff/Ion trends | "
+        "model shape between the three calibrated metrics is a model output, not a measurement",
+    )
+    fig.savefig(path)
+    plt.close(fig)
+
+
 def plot_cross_source(frame: pd.DataFrame, fits: pd.DataFrame, path: Path) -> None:
     """Measured threshold drift of every literature device variant."""
 
