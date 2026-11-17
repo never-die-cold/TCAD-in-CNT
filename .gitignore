@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Generated simulation artifacts
+results/
+*.tdr
+*.plt
+*.log
+*.out
+
+# Local tools and secrets
+.idea/
+.vscode/
+.env
+*.key
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
