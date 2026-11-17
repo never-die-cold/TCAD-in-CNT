@@ -32,3 +32,21 @@ initial_qit,,C/cm2,,SDevice traps,not_reported,No quantitative trap density in p
 dose_rate,195.476,rad(Si)/s,Section 2 page 3,metadata,reported,Not an SDevice electrical input by itself
 irradiation_bias,floating,,Section 2 page 3,metadata and boundary conditions,reported,All device terminals floating during irradiation
 measurement_temperature,room temperature,K,Section 2 page 3,SDevice and metadata,reported_qualitative,Use 300 K only as a documented numerical assumption
+cnt_effective_thickness,5,nm,assumed (P0 registry dev.channel_thickness_nm),SDE geometry,assumed,Range 2-10 nm; same assumption as the compact P0 registry
+source_extension,2.0,um,assumed,SDE geometry,assumed,Symmetric contact extension; paper Figure 1 does not state it; range 1-5 um
+drain_extension,2.0,um,assumed,SDE geometry,assumed,Symmetric contact extension; paper Figure 1 does not state it; range 1-5 um
+substrate_truncation,2.0,um,assumed,SDE geometry,assumed,Reported 500 um truncated; backgate electrode makes the silicon below it electrostatically irrelevant; range 1-10 um
+cnt_permittivity,80,1,assumed (alignment-oriented),SDevice material,assumed,Film must act as the equipotential sheet the compact model assumes; series correction t/eps <= 10 % of tox/eps_top requires eps >= ~75; range 40-120
+cnt_bandgap,0.5,eV,assumed,SDevice material,assumed,Eg ~ 0.7/d[nm] eV for 1-2 nm tubes diluted by the metallic third of the network; range 0.3-0.9 eV
+cnt_electron_affinity,4.5,eV,assumed (graphene-like),SDevice material,assumed,Range 4.3-4.8 eV
+cnt_nc300,5e18,cm-3,derived from 1D tube DOS,SDevice transport,assumed,g/(2 pi hbar vF) ~ 6e6 eV-1 cm-1 over d=1.5 nm -> ~4e20 eV-1 cm-3 integrated over kT -> ~5e18 cm-3; range 1e18-2e19; sets SS with the interface states
+cnt_nv300,5e18,cm-3,derived from 1D tube DOS,SDevice transport,assumed,Same estimate as nc300; range 1e18-2e19
+hole_mobility,21.4,cm2/(V s),cnt-tid p0 calibration (model-inverted zero dose),SDevice transport,calibrated,Scales with the Cox assumption (eps_r 12-20)
+electron_mobility,21.4,cm2/(V s),assumed symmetric complement,SDevice transport,assumed,Unmeasured; same ratio assumption as the P0 n-device; range 0.5-2 x hole mobility
+top_dielectric_effective_permittivity,15,1,assumed (P0 registry series equivalent),SDevice material,assumed,Same series-equivalent Y2O3/HfO2 value as the P0 registry; range 12-20
+gate_workfunction,4.5,eV,assumed,SDevice contact,assumed,Midgap potential of the film is chi + Eg/2 = 4.75 eV; |Vth| = 0.53 V needs the gate ~0.2-0.25 V below it; primary |Vth| alignment knob; range 4.1-5.2 eV; paper gate metal unconfirmed (Figure 1)
+interface_state_density,2.1e13,cm-2 eV-1,derived from digitized SS0,SDevice traps,derived,SS0 = 207.95 mV/dec -> q*Dit/Cox = n0-1 -> Dit = 2.49*Cox/q; zero-dose SS alignment knob; range 1e13-3e13; verify Traps level syntax against the W-2024.09 manual
+mesh_global_max,0.5,um,convention,SDE refinement,convention,Coarse background mesh
+mesh_global_min,0.02,um,convention,SDE refinement,convention,Oxide and substrate resolution
+mesh_channel_max,0.05,um,convention,SDE refinement,convention,Channel resolution along the film
+mesh_channel_min,0.001,um,convention,SDE refinement,convention,1 nm floor resolves the 5 nm film thickness

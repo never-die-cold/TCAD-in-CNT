@@ -20,6 +20,7 @@ from .config import load_config
 from .matrix import run_matrix
 from .p0 import DEFAULT_METRICS, DEFAULT_REGISTRY, run_p0
 from .sensitivity import PARAMETERS, run_sensitivity
+from .tcad_alignment import align_zero_dose
 from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
 from .tcad_project import render_tcad_project
 from .tcad_vm import VmrunSettings, run_tcad_smoke
@@ -127,6 +128,23 @@ def build_parser() -> argparse.ArgumentParser:
     export_cmd.add_argument("--output", type=Path, required=True)
     export_cmd.add_argument("--gate-contact", default="gate")
     export_cmd.add_argument("--drain-contact", default="drain")
+
+    align_cmd = subparsers.add_parser(
+        "tcad-align",
+        help="gate the zero-dose SDevice Id-Vg export against the compact model (<20 %)",
+    )
+    align_cmd.add_argument(
+        "--tcad", type=Path, required=True, help="signed CSV from tcad-export"
+    )
+    align_cmd.add_argument(
+        "--config",
+        type=Path,
+        default=Path("configs/p0/cntfet_tid_p0.toml"),
+        help="resolved compact-model configuration",
+    )
+    align_cmd.add_argument("--i-ref-a", type=float, default=1e-6)
+    align_cmd.add_argument("--gate-rel", type=float, default=0.20)
+    align_cmd.add_argument("--output", type=Path, default=Path("results/tcad/zero_dose"))
     return parser
 
 
@@ -277,6 +295,28 @@ def _cmd_tcad_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_tcad_align(args: argparse.Namespace) -> int:
+    result = align_zero_dose(
+        args.tcad,
+        args.config,
+        i_ref_a=args.i_ref_a,
+        gate_rel=args.gate_rel,
+        output_dir=args.output,
+    )
+    print(f"Zero-dose alignment: {args.output.resolve()}")
+    for row in result.table().to_dict(orient="records"):
+        marker = "ok" if row["passed"] else "OUT"
+        print(
+            f"  [{marker}] {row['metric']:>10s}: model {row['compact_model']:.4g}, "
+            f"tcad {row['tcad']:.4g}, deviation {row['relative_deviation']:.1%}"
+        )
+    print(
+        f"  gate {result.gate_rel:.0%} -> {'PASS' if result.passed else 'FAIL'} "
+        f"({result.points_used} points, {result.points_dropped} forward-gate dropped)"
+    )
+    return 0 if result.passed else 1
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
@@ -297,6 +337,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_tcad_prepare_data(args)
     if args.command == "tcad-export":
         return _cmd_tcad_export(args)
+    if args.command == "tcad-align":
+        return _cmd_tcad_align(args)
     return 2
 
 

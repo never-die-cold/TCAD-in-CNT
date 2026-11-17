@@ -25,7 +25,17 @@ Physics (Material = "CNTNetwork") {
 }
 
 Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
-  Traps(Conc = @RUN_FIXED_CHARGE_CM2@ FixedCharge)
+  # FixedCharge carries the TID oxide charge (zero at zero dose).  The donor
+  # and acceptor levels are the PRE-EXISTING interface states: their
+  # concentration is derived from the digitized zero-dose swing (SS0 =
+  # 207.95 mV/dec -> q*Dit/Cox = n0 - 1 -> Dit = 2.1e13 cm-2 eV-1) and is the
+  # zero-dose SS alignment knob.  Verify the level syntax against the
+  # W-2024.09 SDevice manual before the first run.
+  Traps(
+    Conc = @RUN_FIXED_CHARGE_CM2@ FixedCharge
+    (Donor Level1 EnergyMid = 0.0 Conc = @RUN_INTERFACE_DIT_CM2EV@ eXSection = 1e-14 hXSection = 1e-14)
+    (Acceptor Level2 EnergyMid = 0.0 Conc = @RUN_INTERFACE_DIT_CM2EV@ eXSection = 1e-14 hXSection = 1e-14)
+  )
 }
 
 Plot {

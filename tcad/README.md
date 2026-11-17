@@ -20,7 +20,7 @@ cnt-tid tcad-smoke --output results/tcad-smoke
 
 ## CNTFET 工程状态与用户操作
 
-`tcad/cntfet/topgate/` 已建立面向 Cui 2023 P 型 CNT 网络器件的 SWB 模板，当前处于参数补齐阶段。W-2024.09 不带 `CarbonNanotube`/`Graphene` 内置材料，因此模板使用本地 `datexcodes.txt` 定义有效 `CNTNetwork` 和 `TopDielectric`，所有输运参数必须显式提供。数据来源见 `data/literature/cui2023_topgate/source.md`，你在 SWB 中的逐步操作见 [CNTFET 用户指南](../docs/tcad-user-guide.md)。
+`tcad/cntfet/topgate/` 已建立面向 Cui 2023 P 型 CNT 网络器件的 SWB 模板。v0.7.1 起 `configs/tcad/cntfet_topgate.toml` 的全部 REQUIRED 已按溯源补齐（每个假设带区间，见 `data/literature/cui2023_topgate/device_parameters.csv` 新增行），`cnt-tid tcad-prepare` 已生成 deck（状态 `prepared_not_run`），下一步是用户在 SWB 中首跑零剂量，再经 `cnt-tid tcad-align` 与紧凑模型做 <20 % 的零剂量对齐验收。W-2024.09 不带 `CarbonNanotube`/`Graphene` 内置材料，因此模板使用本地 `datexcodes.txt` 定义有效 `CNTNetwork` 和 `TopDielectric`，所有输运参数必须显式提供。数据来源见 `data/literature/cui2023_topgate/source.md`，你在 SWB 中的逐步操作见 [CNTFET 用户指南](../docs/tcad-user-guide.md)。
 
 ## 推荐实现顺序
 

@@ -1,13 +1,23 @@
 name = "cui2023_p_cnt_network_topgate"
-calibration_status = "awaiting_user_digitization_and_assumptions"
+calibration_status = "prepared_zero_dose_alignment_pending"
 source_data = "data/literature/cui2023_topgate"
 dose_unit = "krad(Si)"
 doses_krad = [0, 200, 500, 1000, 2000, 3000]
+
+# Every non-reported value is an explicit assumption with a stated range; the
+# provenance rows live in data/literature/cui2023_topgate/device_parameters.csv.
+# Alignment knobs: gate_workfunction_ev -> |Vth|, cnt_nc300/nv300 + interface
+# states -> SS, mobilities -> Gm.  Ranges are swept during zero-dose alignment.
 
 [run]
 name = "zero_dose"
 dose_krad = 0.0
 fixed_charge_cm2 = 0.0
+# Pre-existing interface states, derived from the digitized zero-dose swing:
+# SS0 = 207.95 mV/dec -> n0 = SS0/59.6 = 3.49 -> q*Dit/Cox = n0 - 1
+# -> Dit = 2.49 * 1.33e-6 F/cm2 / 1.6e-19 C = 2.1e13 cm-2 eV-1.
+# Range 1e13 - 3e13; verify the Traps level syntax against the W-2024.09 manual.
+interface_dit_cm2ev = 2.1e13
 temperature_k = 300.0
 
 [geometry]
@@ -15,21 +25,42 @@ gate_length_um = 4.0
 gate_width_um = 30.0
 top_dielectric_thickness_um = 0.010
 buried_oxide_thickness_um = 0.280
-channel_thickness_um = "REQUIRED: effective CNT network thickness in um"
-source_extension_um = "REQUIRED: source extension beyond gate in um"
-drain_extension_um = "REQUIRED: drain extension beyond gate in um"
-substrate_thickness_um = "REQUIRED: truncated silicon substrate thickness in um"
+# P0 registry assumption: effective CNT network film, 2-10 nm.
+channel_thickness_um = 0.005
+# Symmetric contact extensions; paper Figure 1 does not state them.
+source_extension_um = 2.0
+drain_extension_um = 2.0
+# Reported 500 um substrate truncated: the backgate electrode at the bottom
+# makes the silicon below it electrostatically irrelevant; kept at 2 um only
+# for a well-conditioned mesh.
+substrate_thickness_um = 2.0
 
 [material]
-cnt_permittivity = "REQUIRED"
-cnt_bandgap_ev = "REQUIRED"
-cnt_electron_affinity_ev = "REQUIRED"
-cnt_nc300_cm3 = "REQUIRED: effective 3D density of states"
-cnt_nv300_cm3 = "REQUIRED: effective 3D density of states"
-electron_mobility_cm2_vs = "REQUIRED"
-hole_mobility_cm2_vs = "REQUIRED"
-top_dielectric_permittivity = "REQUIRED: series-equivalent Y2O3/HfO2 value"
-gate_workfunction_ev = "REQUIRED"
+# The film must act as the equipotential sheet the compact model assumes:
+# with tox/eps_top = 0.010/15, the series correction t_cnt/eps_cnt must stay
+# well under 10 % -> eps_cnt >= 0.005/(0.1*6.67e-4) ~ 75.  Range 40-120.
+cnt_permittivity = 80.0
+# Eg ~ 0.7/d[nm] eV for 1-2 nm semiconducting tubes, diluted by the metallic
+# third of the network.  Range 0.3-0.9.
+cnt_bandgap_ev = 0.5
+# CNT electron affinity, graphene-like.  Range 4.3-4.8.
+cnt_electron_affinity_ev = 4.5
+# 1D tube DOS g/(2*pi*hbar*vF) ~ 6e6 eV-1 cm-1 (vF = 8e7 cm/s, degeneracy 2),
+# spread over the tube diameter 1.5 nm -> ~4e20 eV-1 cm-3; integrating kT
+# around the band edge gives the standard Nc/Nv form ~5e18 cm-3.  Range
+# 1e18 - 2e19 (sets SS together with the interface states).
+cnt_nc300_cm3 = 5e18
+cnt_nv300_cm3 = 5e18
+# Hole mobility is the P0 model-inverted zero-dose value (Vds = 0.1 V).
+# Electron mobility is unmeasured; symmetric-complement assumption, ratio 0.5-2.
+electron_mobility_cm2_vs = 21.4
+hole_mobility_cm2_vs = 21.4
+# Same series-equivalent Y2O3/HfO2 value as the P0 registry assumption.
+top_dielectric_permittivity = 15.0
+# Midgap potential of the film is chi + Eg/2 = 4.75 eV; |Vth| = 0.53 V needs
+# the gate ~0.2-0.25 V below it.  Paper gate metal is unconfirmed (Figure 1);
+# this is the primary |Vth| alignment knob.  Range 4.1-5.2.
+gate_workfunction_ev = 4.5
 
 [bias]
 source_v = 0.0
@@ -39,7 +70,7 @@ gate_final_v = -2.0
 backgate_v = 0.0
 
 [mesh]
-global_max_um = "REQUIRED"
-global_min_um = "REQUIRED"
-channel_max_um = "REQUIRED"
-channel_min_um = "REQUIRED"
+global_max_um = 0.5
+global_min_um = 0.02
+channel_max_um = 0.05
+channel_min_um = 0.001

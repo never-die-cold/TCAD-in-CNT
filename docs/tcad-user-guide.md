@@ -127,8 +127,22 @@ cnt-tid tcad-export \
 - 所有偏置点求解完成，失败点有日志；
 - 电流方向、量级、阈值和亚阈值趋势合理；
 - 至少三档网格的关键指标变化已记录；
+- **通过 `cnt-tid tcad-align` 的 <20 % 门禁**（见下）；
 - 与论文图 2 零剂量曲线的误差和系统偏差已解释；
 - 你明确同意进入 TID 阶段。
+
+### 6.1 零剂量对齐门禁（v0.7.1）
+
+把导出的带符号 CSV 交给对齐命令，它用**同一套提取方法**处理 TCAD 曲线与紧凑模型零剂量曲线（`configs/p0/cntfet_tid_p0.toml`），对 |Vth|（恒流法，默认 1 µA）、最小摆幅、最大跨导三个指标逐一计算相对偏差，任一 ≥20 % 即 FAIL（命令退出码 1）：
+
+```bash
+cnt-tid tcad-align \
+  --tcad results/tcad/zero_dose/idvg_signed.csv \
+  --config configs/p0/cntfet_tid_p0.toml \
+  --output results/tcad/zero_dose
+```
+
+产物：`alignment_metrics.csv`（指标表）、`alignment_verdict.json`（判定）、`alignment_overlay.png`（叠加审计图）。偏差超限时的对齐旋钮：|Vth| → `gate_workfunction_ev`；SS → `run.interface_dit_cm2ev`（与 `cnt_nc300/nv300`）；Gm → `hole_mobility_cm2_vs`。每个旋钮的允许区间写在配置注释与 `device_parameters.csv` 中；改完重新 `cnt-tid tcad-prepare` 并重跑。首次运行请先核对 `sdevice_des.cmd` 中 Traps 界面态语法与所用版本手册一致。
 
 ## 7. 第五步：经你批准后才做 TID
 
@@ -158,4 +172,4 @@ Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
 
 ## 9. 运行前提与下一步
 
-运行前提：完成图 2 数据提取、补齐 `REQUIRED` 参数并生成 deck。下一步：**先数字化零剂量曲线并复核，然后补齐一份有出处的材料参数表。**
+运行前提（v0.7.1 已就绪）：`configs/tcad/cntfet_topgate.toml` 的 REQUIRED 已全部按溯源补齐，deck 已由 `cnt-tid tcad-prepare` 生成于 `results/tcad/prepared/`（状态 `prepared_not_run`）。下一步：**把 deck 复制进 SWB 首跑零剂量（第 5 节），回传 `.plt` 后执行第 6.1 节的 `cnt-tid tcad-align` <20 % 门禁；偏差超限时按第 6.1 节的旋钮表调整后重跑。**
