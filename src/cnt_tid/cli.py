@@ -18,6 +18,7 @@ from .calibration import (
 )
 from .config import load_config
 from .matrix import run_matrix
+from .monte_carlo import plot_monte_carlo, run_monte_carlo
 from .p0 import DEFAULT_METRICS, DEFAULT_REGISTRY, run_p0
 from .ringosc import write_ring_oscillator_artifacts
 from .sensitivity import PARAMETERS, run_sensitivity
@@ -100,6 +101,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ringosc_cmd.add_argument("--config", type=Path, default=Path("configs/p0/cntfet_tid_p0.toml"))
     ringosc_cmd.add_argument("--output", type=Path, default=Path("results/ringosc"))
+
+    mc_cmd = subparsers.add_parser(
+        "mc",
+        help="full-chain Monte Carlo: registry ranges + digitized error bars -> CI on key numbers",
+    )
+    mc_cmd.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    mc_cmd.add_argument("--metrics", type=Path, default=DEFAULT_METRICS)
+    mc_cmd.add_argument("--draws", type=int, default=200)
+    mc_cmd.add_argument("--seed", type=int, default=20261118)
+    mc_cmd.add_argument("--output", type=Path, default=Path("results/mc"))
+    mc_cmd.add_argument("--figure", type=Path, default=None, help="optional band-figure path")
 
     tcad_cmd = subparsers.add_parser(
         "tcad-smoke", help="run the verified SDE/SDevice smoke deck in a VMware guest"
@@ -260,6 +272,38 @@ def _cmd_p0(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_mc(args: argparse.Namespace) -> int:
+    artifacts = run_monte_carlo(
+        args.registry,
+        args.metrics,
+        draws=args.draws,
+        seed=args.seed,
+        output_dir=args.output,
+    )
+    if args.figure is not None:
+        plot_monte_carlo(artifacts.scan, args.figure)
+        print(f"Band figure written: {args.figure.resolve()}")
+    print(f"Monte Carlo complete: {artifacts.output_dir.resolve()}")
+    print(
+        f"  draws {artifacts.metadata['draws_completed']}/"
+        f"{artifacts.metadata['draws_requested']} "
+        f"({artifacts.metadata['draws_failed']} failed physicality), "
+        f"seed {artifacts.metadata['seed']}"
+    )
+    for key in (
+        "vth_shift_at_max_dose_v",
+        "vm_at_max_dose_v",
+        "frequency_hz_at_max_dose",
+        "static_power_w_at_max_dose",
+    ):
+        stats = artifacts.summary[key]
+        print(
+            f"  {key:>30s}: median {stats['median']:.4g}  "
+            f"[5 %: {stats['p5']:.4g}, 95 %: {stats['p95']:.4g}]"
+        )
+    return 0
+
+
 def _cmd_ringosc(args: argparse.Namespace) -> int:
     config = load_config(args.config)
     artifacts = write_ring_oscillator_artifacts(config, args.output)
@@ -356,6 +400,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_p0(args)
     if args.command == "ringosc":
         return _cmd_ringosc(args)
+    if args.command == "mc":
+        return _cmd_mc(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":
