@@ -1,6 +1,6 @@
 """Figure set for the P0 deliverable.
 
-Six figures, each stamped with the information it needs to be traced back:
+Seven figures, each stamped with the information it needs to be traced back:
 
 fig1  frozen device structure and the provenance class of every dimension
 fig2  calibrated model versus digitized Figure 3 metrics (threshold, Gm, SS,
@@ -9,6 +9,7 @@ fig3  device-to-inverter dose sweep (VTC family, static metrics)
 fig4  one-at-a-time sensitivity of the inverter metrics
 fig5  inverter response across the documented assumption ranges
 fig6  cross-source threshold-drift dose laws
+fig7  quasi-static ring-oscillator frequency and stage power budget
 """
 
 from __future__ import annotations
@@ -361,6 +362,61 @@ def plot_assumption_sweep(frame: pd.DataFrame, path: Path) -> None:
         fig,
         "cnt-tid p0 | fig5 | inverter response across the stated assumption ranges | "
         "eps_r 12-20, n/p ratio 0.5-1.5",
+    )
+    fig.savefig(path)
+    plt.close(fig)
+
+
+def plot_ring_oscillator(scan: pd.DataFrame, path: Path) -> None:
+    """Ring-oscillator frequency collapse and static-power explosion with dose."""
+
+    _style()
+    doses = scan["dose_krad"].to_numpy(dtype=float)
+    fig, (left, right) = plt.subplots(1, 2, figsize=(10.4, 4.2), constrained_layout=True)
+    left.plot(doses, scan["frequency_hz"], "o-", color="#4c78a8", linewidth=1.4)
+    left.set(
+        xlabel="Dose (krad(Si))",
+        ylabel="Ring frequency (Hz)",
+        title="Ring-oscillator frequency",
+    )
+    right.plot(
+        doses,
+        scan["static_power_w"],
+        "s-",
+        color="#b2182b",
+        linewidth=1.4,
+        label="static",
+    )
+    right.plot(
+        doses,
+        scan["dynamic_power_w"],
+        "^-",
+        color="#2166ac",
+        linewidth=1.4,
+        label="dynamic",
+    )
+    right.plot(
+        doses,
+        scan["total_power_w"],
+        "-",
+        color="#333333",
+        linewidth=1.2,
+        alpha=0.6,
+        label="total",
+    )
+    right.set(
+        xlabel="Dose (krad(Si))",
+        ylabel="Power (W)",
+        title="Stage power budget",
+    )
+    for axis in (left, right):
+        axis.set_yscale("log")
+        axis.grid(True, which="both", alpha=0.18)
+    right.legend(fontsize=7, loc="best")
+    _stamp(
+        fig,
+        "cnt-tid p0 | fig7 | quasi-static ring oscillator | "
+        "load = next-stage gate cap, 50 % delay = C_L * integral dV/I over half the rail",
     )
     fig.savefig(path)
     plt.close(fig)

@@ -48,10 +48,12 @@ from .p0_plots import (
     plot_cross_source,
     plot_device_validation,
     plot_inverter,
+    plot_ring_oscillator,
     plot_sensitivity,
     plot_structure,
 )
 from .registry import ParameterRecord, build_simulation_config, load_registry, number
+from .ringosc import write_ring_oscillator_artifacts
 from .sensitivity import run_sensitivity
 from .workflow import run_simulation
 
@@ -374,6 +376,8 @@ def run_p0(
     robustness_dir.mkdir(exist_ok=True)
     robustness.to_csv(robustness_dir / "assumption_sweep.csv", index=False)
 
+    ring = write_ring_oscillator_artifacts(config, output / "ring_oscillator")
+
     figures = output / "figures"
     figures.mkdir(exist_ok=True)
     plot_structure(registry, calibration, figures / "fig1_structure.png")
@@ -384,6 +388,7 @@ def run_p0(
     )
     plot_assumption_sweep(robustness, figures / "fig5_robustness.png")
     plot_cross_source(cross_frame, cross_fits, figures / "fig6_cross_source.png")
+    plot_ring_oscillator(ring.scan, figures / "fig7_ringosc.png")
 
     consistency_mv = float(
         1000.0 * (validation["vth_v_model"] - validation["vth_mag_v_check"]).abs().max()
@@ -428,6 +433,17 @@ def run_p0(
         "nml_v_at_max_dose": float(last["nml_v"]),
         "nmh_v_at_max_dose": float(last["nmh_v"]),
         "inverter_switching_maintained": bool(np.isfinite(float(last["vm_v"]))),
+        "ro_stages": config.ro_stages,
+        "ro_load_cap_ff": float(ring.scan["load_cap_f"].iloc[0] * 1e12),
+        "ro_frequency_hz_at_zero_dose": float(ring.scan["frequency_hz"].iloc[0]),
+        "ro_frequency_hz_at_max_dose": float(ring.scan["frequency_hz"].iloc[-1]),
+        "ro_frequency_degradation_factor": float(
+            ring.scan["frequency_hz"].iloc[0] / ring.scan["frequency_hz"].iloc[-1]
+        ),
+        "ro_stage_delay_s_at_max_dose": float(ring.scan["stage_delay_s"].iloc[-1]),
+        "ro_static_power_w_at_zero_dose": float(ring.scan["static_power_w"].iloc[0]),
+        "ro_static_power_w_at_max_dose": float(ring.scan["static_power_w"].iloc[-1]),
+        "ro_total_power_w_at_max_dose": float(ring.scan["total_power_w"].iloc[-1]),
         "cross_source_variants": int(cross_fits.shape[0]),
         "cross_source_usable_fits": int(cross_fits["usable"].sum()),
         "cross_source_exponent_min": float(cross_fits.loc[cross_fits["usable"], "exponent"].min()),
@@ -452,6 +468,7 @@ def run_p0(
             "fig4_sensitivity.png",
             "fig5_robustness.png",
             "fig6_cross_source.png",
+            "fig7_ringosc.png",
         ):
             (published_dir / name).write_bytes((figures / name).read_bytes())
             published[name] = _sha256(published_dir / name)

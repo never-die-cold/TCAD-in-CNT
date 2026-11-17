@@ -106,6 +106,7 @@ class SimulationConfig:
     doses_krad: tuple[float, ...] = (0.0, 100.0, 300.0, 500.0, 1000.0)
     transfer_points: int = 401
     inverter_points: int = 1001
+    ro_stages: int = 11
     calibration_status: str = "illustrative_uncalibrated"
     n_device: DeviceConfig = DeviceConfig(polarity="n")
     p_device: DeviceConfig = DeviceConfig(
@@ -123,6 +124,8 @@ class SimulationConfig:
             raise ValueError("doses_krad must not contain duplicates")
         if self.transfer_points < 20 or self.inverter_points < 100:
             raise ValueError("transfer_points >= 20 and inverter_points >= 100 required")
+        if self.ro_stages < 3 or self.ro_stages % 2 == 0:
+            raise ValueError("ro_stages must be an odd number >= 3 (inverter ring)")
         if self.n_device.polarity != "n" or self.p_device.polarity != "p":
             raise ValueError("n_device and p_device must have matching polarity")
 

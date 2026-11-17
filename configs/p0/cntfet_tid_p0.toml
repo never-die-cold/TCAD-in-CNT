@@ -6,6 +6,7 @@ dose_unit = "krad(Si)"
 doses_krad = [0.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0]
 transfer_points = 401
 inverter_points = 1001
+ro_stages = 11
 calibration_status = "calibrated_compact_fit_metrics"
 
 [n_device]

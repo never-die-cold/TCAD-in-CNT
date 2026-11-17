@@ -19,6 +19,7 @@ from .calibration import (
 from .config import load_config
 from .matrix import run_matrix
 from .p0 import DEFAULT_METRICS, DEFAULT_REGISTRY, run_p0
+from .ringosc import write_ring_oscillator_artifacts
 from .sensitivity import PARAMETERS, run_sensitivity
 from .tcad_alignment import align_zero_dose
 from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
@@ -92,6 +93,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("docs/figures/p0"),
         help="copy the figure set here; results/ is not tracked by git",
     )
+
+    ringosc_cmd = subparsers.add_parser(
+        "ringosc",
+        help="quasi-static ring-oscillator frequency and power degradation scan",
+    )
+    ringosc_cmd.add_argument("--config", type=Path, default=Path("configs/p0/cntfet_tid_p0.toml"))
+    ringosc_cmd.add_argument("--output", type=Path, default=Path("results/ringosc"))
 
     tcad_cmd = subparsers.add_parser(
         "tcad-smoke", help="run the verified SDE/SDevice smoke deck in a VMware guest"
@@ -252,6 +260,23 @@ def _cmd_p0(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_ringosc(args: argparse.Namespace) -> int:
+    config = load_config(args.config)
+    artifacts = write_ring_oscillator_artifacts(config, args.output)
+    scan = artifacts.scan
+    print(f"Ring-oscillator scan complete: {artifacts.output_dir.resolve()}")
+    print(
+        f"  {config.ro_stages}-stage ring, load {artifacts.metadata['load_capacitance_f'] * 1e12:.2f} pF/stage"
+    )
+    for _, row in scan.iterrows():
+        print(
+            f"  {row['dose_krad']:>7g} krad: f = {row['frequency_hz']:.3e} Hz, "
+            f"t_pd = {row['stage_delay_s'] * 1e9:.2f} ns, "
+            f"P_static = {row['static_power_w']:.3e} W, P_total = {row['total_power_w']:.3e} W"
+        )
+    return 0
+
+
 def _cmd_tcad_smoke(args: argparse.Namespace) -> int:
     if not args.vmrun or not args.vmx:
         raise ValueError("--vmrun and --vmx are required (or set TCAD_VMRUN and TCAD_VMX)")
@@ -329,6 +354,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_matrix(args)
     if args.command == "p0":
         return _cmd_p0(args)
+    if args.command == "ringosc":
+        return _cmd_ringosc(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":

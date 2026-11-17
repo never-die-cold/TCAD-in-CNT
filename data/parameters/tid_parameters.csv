@@ -6,6 +6,7 @@ sim.dose_unit,unit,krad(Si),,reported,"Cui 2023 Section 2 and Table 1",,,kept in
 sim.doses_krad,doses,"0,200,500,1000,2000,3000",krad(Si),reported,"Cui 2023 Section 2 and Figure 2",,,""
 sim.transfer_points,points,401,1,convention,cnt-tid p0,,,Id-Vg sweep grid
 sim.inverter_points,points,1001,1,convention,cnt-tid p0,,,VTC sweep grid
+sim.ro_stages,stages,11,1,convention,"cnt-tid ring-oscillator model",,,"odd stage count of the analyzed inverter ring; quasi-static delay model"
 sim.calibration_status,status,calibrated_compact_fit_metrics,,calibrated,"cnt-tid p0 calibration stage",,,set only when the metric calibration succeeds
 dev.width_um,W,30.0,um,reported,"Cui 2023 Section 2 page 3",,,gate width into the page
 dev.length_nm,Lg,4000,nm,reported,"Cui 2023 Section 2 page 3",,,4 um gate length

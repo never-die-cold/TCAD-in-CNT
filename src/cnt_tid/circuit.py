@@ -65,6 +65,36 @@ def _current_balance(
     return n_current - p_current
 
 
+def static_operating_current(
+    n_state: DeviceState,
+    p_state: DeviceState,
+    vdd_v: float,
+    vin_v: float,
+) -> float:
+    """DC through-current of one inverter held at a fixed input.
+
+    Solves Id,n(Vin, Vout) = Id,p(Vdd-Vin, Vdd-Vout) for the operating point
+    and returns the balance current.  At zero dose this is the subthreshold
+    leakage of the off device; once irradiation pushes one threshold past the
+    rail, the balance current is the through-current of a stage that can no
+    longer switch off, which is what makes the static power explode.
+    """
+
+    if vdd_v <= 0:
+        raise ValueError("vdd_v must be positive")
+    args = (vin_v, n_state, p_state, vdd_v)
+    low = _current_balance(0.0, *args)
+    high = _current_balance(vdd_v, *args)
+    if low > 0.0:
+        # Rail-pinned low: the pull-up device fights into a grounded node.
+        return float(drain_current(p_state, vdd_v - vin_v, vdd_v))
+    if high < 0.0:
+        # Rail-pinned high: the pull-down device fights into a Vdd node.
+        return float(drain_current(n_state, vin_v, vdd_v))
+    output_v = brentq(_current_balance, 0.0, vdd_v, args=args, xtol=1e-12)
+    return float(drain_current(n_state, vin_v, output_v))
+
+
 def solve_inverter(
     n_state: DeviceState,
     p_state: DeviceState,
