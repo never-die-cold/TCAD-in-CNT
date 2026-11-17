@@ -8,6 +8,8 @@ import os
 from collections.abc import Sequence
 from pathlib import Path
 
+import numpy as np
+
 from .calibration import (
     apply_calibration,
     calibrate,
@@ -18,10 +20,13 @@ from .calibration import (
 )
 from .config import load_config
 from .matrix import run_matrix
+from .metric_calibration import load_digitized_metrics
 from .monte_carlo import plot_monte_carlo, run_monte_carlo
 from .p0 import DEFAULT_METRICS, DEFAULT_REGISTRY, run_p0
+from .registry import load_registry, number
 from .ringosc import write_ring_oscillator_artifacts
 from .sensitivity import PARAMETERS, run_sensitivity
+from .structure_transfer import write_prediction_artifacts
 from .tcad_alignment import align_zero_dose
 from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
 from .tcad_project import render_tcad_project
@@ -112,6 +117,28 @@ def build_parser() -> argparse.ArgumentParser:
     mc_cmd.add_argument("--seed", type=int, default=20261118)
     mc_cmd.add_argument("--output", type=Path, default=Path("results/mc"))
     mc_cmd.add_argument("--figure", type=Path, default=None, help="optional band-figure path")
+
+    predict_cmd = subparsers.add_parser(
+        "predict",
+        help="structure-transfer |Vt shift| predictions with architecture-class bands",
+    )
+    predict_cmd.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    predict_cmd.add_argument("--metrics", type=Path, default=DEFAULT_METRICS)
+    predict_cmd.add_argument(
+        "--second-source",
+        type=Path,
+        default=Path("data/literature/kanhaiya2021/vt_shift_vs_tid.csv"),
+    )
+    predict_cmd.add_argument(
+        "--doses",
+        type=float,
+        nargs="+",
+        default=(100.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0, 10000.0),
+    )
+    predict_cmd.add_argument("--output", type=Path, default=Path("results/predict"))
+    predict_cmd.add_argument(
+        "--figure", type=Path, default=Path("docs/figures/p0/fig9_prediction_bands.png")
+    )
 
     tcad_cmd = subparsers.add_parser(
         "tcad-smoke", help="run the verified SDE/SDevice smoke deck in a VMware guest"
@@ -304,6 +331,29 @@ def _cmd_mc(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_predict(args: argparse.Namespace) -> int:
+    registry = load_registry(args.registry)
+    metrics = load_digitized_metrics(args.metrics)
+    table_path, manifest_path = write_prediction_artifacts(
+        [args.second_source],
+        metrics,
+        oxide_thickness_nm=number(registry, "dev.oxide_thickness_nm"),
+        oxide_relative_permittivity=number(registry, "dev.oxide_relative_permittivity"),
+        dose_grid=np.asarray(args.doses, dtype=float),
+        output_dir=args.output,
+        figure_path=args.figure,
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    print(f"Prediction table written: {table_path.resolve()}")
+    for variant in manifest["variants"]:
+        print(
+            f"  {variant['device_id']:>34s}: {variant['strategy']:<19s} "
+            f"anchor {variant['anchor_dose_krad']:g} krad, p = {variant['exponent']:g}"
+        )
+    print(f"Band figure written: {args.figure.resolve()}")
+    return 0
+
+
 def _cmd_ringosc(args: argparse.Namespace) -> int:
     config = load_config(args.config)
     artifacts = write_ring_oscillator_artifacts(config, args.output)
@@ -402,6 +452,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_ringosc(args)
     if args.command == "mc":
         return _cmd_mc(args)
+    if args.command == "predict":
+        return _cmd_predict(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":

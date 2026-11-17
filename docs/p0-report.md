@@ -240,6 +240,19 @@ P0 主线只用了 Cui 2023 一个 p 型器件。第二份数据（Kanhaiya et a
 
 数据与复算：`data/literature/kanhaiya2021/`（`source.md`、`vt_shift_vs_tid.csv`、`digitization_report.json`）、`scripts/digitize_kanhaiya2021.py`、`results/p0/cross_source/`。
 
+### 7.1 结构迁移预测器（v0.10.0）
+
+把上面的结论变成工程工具：`cnt-tid predict` 对 8 个器件变体给出 \|ΔV_T\|(D) 预测与**类别包络带**（图 9）：
+
+- **自身可用幂律**（6 个变体，p = 0.233–0.845）：直接用自身拟合外推/内插，超出实测剂量范围的点带 `extrapolated` 标记；
+- **拐点型**（dual-gate × 两种 EOT）：Cui 律锚定到其首个可用实测点（单点迁移，最有利的情形）；
+- **低于噪声底**（dual-gate, fig 3e）：明确拒判，不给数字——低剂量段贴零不是幂律，硬拟合会产出伪参数；
+- **类别包络带** = 全体可用指数（0.233–0.845）过同一锚点的包络。它回答"只知道是 CNT FET、只测了一个点"还能剩多少不确定性：距锚点每 10 倍剂量，带上下沿差约 **4.1×**（10^0.612）。Cui 主线在 10 Mrad 处的带为 0.67–7.3 V，中位预测 1.77 V。
+
+图 9 同时如实显示：kanhaiya_top_gate 的自身可用拟合（R² = 0.925）在高剂量端仍欠预测实测点约 20 %——"可用幂律"不等于"外推无风险"。
+
+命令与产物：`cnt-tid predict --doses 100 200 500 1000 2000 3000 10000` → `results/predict/prediction_table.csv`、`prediction_manifest.json`、`docs/figures/p0/fig9_prediction_bands.png`。
+
 ---
 
 ## 8. 敏感性与不确定性
