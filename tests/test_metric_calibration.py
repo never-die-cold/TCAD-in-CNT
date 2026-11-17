@@ -118,6 +118,69 @@ def test_repository_calibration_is_physical():
     assert calibration.q_ot_c_cm2_per_krad > calibration.q_it_c_cm2_per_krad
     assert abs(calibration.residuals["vth_residual_mv"]).max() < 100.0
     assert calibration.holdout["vth_residual_mv"].abs().max() < 150.0
+    # Two-stage swing channel: generated density and anneal are both fitted,
+    # every swing residual stays inside ~1.3 sigma of the digitized bars, and
+    # the modelled swing dips below its zero-dose value (the 200 krad valley).
+    assert calibration.qit_density_slope_c_cm2_per_krad > 0
+    assert calibration.qit_anneal_c_cm2 > 0
+    assert 10.0 <= calibration.qit_anneal_dose_krad <= 20000.0
+    assert calibration.residuals["ss_residual_mv"].abs().max() < 25.0
+    valley = calibration.residuals.loc[calibration.residuals["ss_mv_model"].idxmin()]
+    assert valley["ss_mv_model"] < calibration.ss0_mv_dec
+    # The modelled dip is broader than the measured one: its minimum lands
+    # one grid point past the measured valley, but inside the same window.
+    assert valley["dose_krad"] in (200.0, 500.0)
+
+
+def test_calibration_recovers_a_synthetic_two_stage_swing():
+    """A swing that dips below its zero-dose value is recovered by the fit."""
+
+    vth0, ss0, gm0 = 0.53, 208.0, 1.07e-5
+    q_total, k_density, q_anneal, anneal_dose, exponent = 3.0e-8, 4.0e-8, 2.5e-6, 250.0, 0.6
+    cox = 1.33e-6
+    rows = []
+    for dose in (0.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0):
+        scale = dose**exponent
+        anneal = q_anneal * -np.expm1(-dose / anneal_dose)
+        vth = vth0 + q_total * scale / cox
+        ss = ss0 + ((k_density * scale - anneal) / cox) * IDEAL_SS_MV
+        gm = gm0 / (1.0 + 5.5e-4 * dose)
+        for metric, value, unit in (
+            ("vth_v", -vth, "V"),
+            ("gm_max_s", gm, "S"),
+            ("ss_mv_dec", ss, "mV/dec"),
+        ):
+            rows.append(
+                {
+                    "source": "synthetic",
+                    "device_id": "synth_two_stage",
+                    "polarity": "p",
+                    "dose_value": dose,
+                    "dose_unit": "krad(Si)",
+                    "vds_signed_v": -0.1,
+                    "metric": metric,
+                    "value": value,
+                    "unit": unit,
+                    "err_minus": abs(value) * 1e-3,
+                    "err_plus": abs(value) * 1e-3,
+                }
+            )
+    calibration = calibrate_from_metrics(
+        pd.DataFrame(rows),
+        oxide_thickness_nm=10.0,
+        oxide_relative_permittivity=15.0,
+        width_um=30.0,
+        length_nm=4000.0,
+        temperature_k=300.0,
+    )
+    assert calibration.dose_exponent == pytest.approx(exponent, abs=0.02)
+    assert calibration.qit_density_slope_c_cm2_per_krad == pytest.approx(k_density, rel=0.1)
+    assert calibration.qit_anneal_c_cm2 == pytest.approx(q_anneal, rel=0.15)
+    assert calibration.qit_anneal_dose_krad == pytest.approx(anneal_dose, rel=0.5)
+    assert calibration.residuals["ss_residual_mv"].abs().max() < 5.0
+    # The anneal term lives only in the swing channel: the threshold fit is
+    # exactly the power law it would have been without the dip.
+    assert calibration.residuals["vth_residual_mv"].abs().max() < 2.0
 
 
 def test_swing_and_threshold_share_one_exponent():
@@ -154,3 +217,65 @@ def test_swing_and_threshold_share_one_exponent():
     ) / device.cox_f_cm2
     assert n_model == pytest.approx(n_expected, rel=1e-12)
     assert device.cox_f_cm2 == pytest.approx(EPSILON_0_F_M * 15.0 / 10e-9 / 1e4, rel=1e-12)
+
+
+def test_anneal_channel_is_absent_from_the_threshold():
+    """The two-stage anneal bends the swing but must not move the threshold."""
+
+    from dataclasses import replace
+
+    from cnt_tid.device import state_at_dose
+
+    config = DeviceConfig(
+        polarity="p",
+        width_um=30.0,
+        length_nm=4000.0,
+        oxide_thickness_nm=10.0,
+        oxide_relative_permittivity=15.0,
+        mobility_m2_vs=2.1e-3,
+        threshold_v=0.53,
+        slope_factor=3.49,
+        qot_slope_c_cm2_per_krad=2.2e-8,
+        qit_slope_c_cm2_per_krad=8.9e-9,
+        dose_exponent=0.48,
+        slope_factor_from_qit=True,
+        qit_density_slope_c_cm2_per_krad=3.9e-8,
+        qit_anneal_c_cm2=1.1e-6,
+        qit_anneal_dose_krad=239.0,
+    )
+    dose = 200.0
+    state = state_at_dose(config, dose)
+    no_anneal = state_at_dose(replace(config, qit_anneal_c_cm2=0.0), dose)
+
+    # The threshold sees only the charged-trap power law; the anneal term
+    # must not leak into it.
+    assert state.threshold_v == pytest.approx(no_anneal.threshold_v, rel=1e-12)
+    assert state.qit_c_cm2 == pytest.approx(no_anneal.qit_c_cm2, rel=1e-12)
+
+    # The swing sees the anneal: it dips below the no-anneal swing, and at
+    # zero dose both reduce to the baseline slope factor.
+    anneal = config.qit_anneal_c_cm2 * -np.expm1(-dose / config.qit_anneal_dose_krad)
+    assert state.slope_factor == pytest.approx(
+        no_anneal.slope_factor - anneal / config.cox_f_cm2, rel=1e-12
+    )
+    assert state.slope_factor < no_anneal.slope_factor
+    zero = state_at_dose(config, 0.0)
+    assert zero.slope_factor == pytest.approx(config.slope_factor, rel=1e-12)
+    assert zero.qit_density_net_c_cm2 == 0.0
+
+    # Legacy configs without density fields keep the single-power-law swing.
+    legacy = DeviceConfig(
+        polarity="p",
+        qit_slope_c_cm2_per_krad=8.9e-9,
+        dose_exponent=0.48,
+        slope_factor_from_qit=True,
+    )
+    legacy_state = state_at_dose(legacy, 1000.0)
+    assert legacy_state.slope_factor == pytest.approx(
+        legacy.slope_factor
+        + legacy.qit_slope_c_cm2_per_krad * 1000.0**0.48 / legacy.cox_f_cm2,
+        rel=1e-12,
+    )
+    assert legacy_state.qit_density_net_c_cm2 == pytest.approx(
+        legacy.qit_slope_c_cm2_per_krad * 1000.0**0.48, rel=1e-12
+    )

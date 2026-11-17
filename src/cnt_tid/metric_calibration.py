@@ -9,7 +9,7 @@ parameters using the paper's own relations:
 * Eq. (3):  SS   = ln10 * kT/q * (1 + Cit/Cox) -> interface-trap charge
 * Eq. (2):  Gm   = mu * Cox * W/L * Vds     -> effective mobility
 
-Two modelling choices are made explicit:
+Three modelling choices are made explicit:
 
 1. The dose response is a power law Q = k * D**p.  The linear law (p = 1)
    cannot follow the measured sub-linear threshold drift; p is fitted and
@@ -19,6 +19,16 @@ Two modelling choices are made explicit:
    digitized value at Vds = 0.1 V).  That removes the analytic approximation
    from the calibration and makes the residual purely a statement about the
    dose law.
+3. The swing channel is a *two-stage* law.  The swing senses interface-trap
+   density, and the measured swing first drops below its zero-dose value
+   (Cui 2023 Figure 3c, 200 krad) before rising: the anchor paper attributes
+   this to annealing.  The density is therefore modelled as generated
+   density k * D**p minus a saturating anneal term q_a * (1 - exp(-D/D_a))
+   that passivates pre-existing interface states.  The anneal term lives
+   only in the density channel: it must not enter the threshold channel,
+   where it would contradict the strictly monotonic measured threshold
+   drift (passivated pre-existing states are near-neutral and already
+   absorbed into the zero-dose threshold).
 """
 
 from __future__ import annotations
@@ -55,6 +65,9 @@ class MetricCalibration:
     dose_exponent: float
     cox_f_cm2: float
     total_charge_slope_c_cm2_per_krad: float
+    qit_density_slope_c_cm2_per_krad: float
+    qit_anneal_c_cm2: float
+    qit_anneal_dose_krad: float
     residuals: pd.DataFrame = field(repr=False)
     holdout: pd.DataFrame = field(repr=False)
     diagnostics: dict = field(default_factory=dict, repr=False)
@@ -74,6 +87,9 @@ class MetricCalibration:
                 "dose_exponent",
                 "cox_f_cm2",
                 "total_charge_slope_c_cm2_per_krad",
+                "qit_density_slope_c_cm2_per_krad",
+                "qit_anneal_c_cm2",
+                "qit_anneal_dose_krad",
             )
         }
 
@@ -141,6 +157,60 @@ def _fit_power_law(doses: np.ndarray, values: np.ndarray) -> tuple[float, float]
     return float(fit.x[0]), float(fit.x[1])
 
 
+def density_net_c_cm2(
+    doses: np.ndarray, exponent: float, k_density: float, q_anneal: float, anneal_dose: float
+) -> np.ndarray:
+    """Two-stage swing-channel density: generated minus annealed.
+
+    N_it,net(D) = k * D**p - q_a * (1 - exp(-D/D_a)).  The anneal term is zero
+    at D = 0 and saturates at q_a, so the density starts at zero, can dip
+    below zero while passivation dominates, and returns to power-law growth
+    once generation wins.
+    """
+
+    doses = np.asarray(doses, dtype=float)
+    return k_density * doses**exponent - q_anneal * -np.expm1(-doses / anneal_dose)
+
+
+def _fit_two_stage_density(
+    doses: np.ndarray, q_net: np.ndarray, sigma: np.ndarray, exponent: float
+) -> tuple[float, float, float]:
+    """Fit the two-stage density law to the swing-derived net values.
+
+    The fit is weighted by the digitized swing error bars (converted to
+    charge units).  The objective surface is multimodal on sparse dose grids
+    (a fast saturating anneal and a slow one can fit almost equally well
+    below the first measured dose), so the fit is run from a deterministic
+    grid of starting points and the best solution is kept; this keeps the
+    result reproducible instead of dependent on a lucky guess.
+    """
+
+    def residual(params: np.ndarray) -> np.ndarray:
+        k_density, q_anneal, anneal_dose = params
+        return (
+            density_net_c_cm2(doses, exponent, k_density, q_anneal, anneal_dose) - q_net
+        ) / sigma
+
+    dip = float(-min(float(q_net.min()), 0.0))
+    k0 = max(float(q_net.max()), dip, 1e-15) / float(doses.max() ** exponent)
+    dip_dose = float(doses[int(np.argmin(q_net))])
+    lower = np.array([1e-15, 0.0, 10.0])
+    upper = np.array([np.inf, np.inf, 20000.0])
+    best = None
+    for anneal_dose0 in (10.0, dip_dose, 500.0, 2000.0):
+        for q_anneal0 in (max(dip, 1e-15), 2.0 * max(dip, 1e-15) + 1e-15):
+            fit = least_squares(
+                residual,
+                np.array([k0, q_anneal0, anneal_dose0]),
+                bounds=(lower, upper),
+                method="trf",
+            )
+            if best is None or fit.cost < best.cost:
+                best = fit
+    assert best is not None  # the start grid is never empty
+    return float(best.x[0]), float(best.x[1]), float(best.x[2])
+
+
 def _probe_config(base: DeviceConfig, mobility: float) -> DeviceConfig:
     """Zero-dose probe: mobility is the only free variable."""
 
@@ -196,7 +266,7 @@ def fit_mobility_degradation(
     doses: np.ndarray,
     mobility0: float,
     q_total_slope: float,
-    q_it_slope: float,
+    density_params: tuple[float, float, float],
     exponent: float,
     cox_f_cm2: float,
     vth0_mag_v: float,
@@ -214,7 +284,7 @@ def fit_mobility_degradation(
 
     scale = doses**exponent
     vth_fit = vth0_mag_v + q_total_slope * scale / cox_f_cm2
-    slope_fit = slope_factor0 + q_it_slope * scale / cox_f_cm2
+    slope_fit = slope_factor0 + density_net_c_cm2(doses, exponent, *density_params) / cox_f_cm2
 
     def objective(alpha: float) -> float:
         mobility = mobility0 / (1.0 + alpha * doses)
@@ -288,7 +358,9 @@ def calibrate_from_metrics(
     k_shift, exponent = _fit_power_law(doses[nonzero], shift_v[nonzero])
     total_charge_slope = k_shift * cox_f_cm2
 
-    # Eq. (3): the swing degradation is the interface-charge channel.
+    # Eq. (3): the swing degradation is the interface-density channel.  The
+    # values can dip below zero around the annealing valley; that is physical
+    # and is what the two-stage fit below reproduces.
     q_it_values = cox_f_cm2 * (slope_factor - slope_factor[0])
     design = doses[nonzero] ** exponent
     q_it_slope = float(np.sum(q_it_values[nonzero] * design) / np.sum(design**2))
@@ -298,11 +370,29 @@ def calibrate_from_metrics(
     if q_ot_slope <= 0:
         raise ValueError("interface charge exceeds total charge; the split is not physical")
 
+    # The charged split above is bookkeeping: only the total charge is
+    # observable in the threshold.  The swing channel gets its own two-stage
+    # law (generated density minus a saturating anneal), weighted by the
+    # digitized error bars so the noisy valley point does not dominate.  The
+    # bars are marker-position uncertainties, so they are floored at a 3
+    # mV/dec systematic: without the floor the 1000 krad bar (0.37 mV) would
+    # outweigh the valley point (16 mV) by more than forty to one.
+    ss_err_mv = np.zeros_like(doses)
+    for column in ("ss_mv_dec_err_minus", "ss_mv_dec_err_plus"):
+        if column in wide.columns:
+            ss_err_mv += wide[column].to_numpy(dtype=float)
+    ss_sigma_mv = np.where(ss_err_mv > 0.0, np.maximum(0.5 * ss_err_mv, 3.0), 3.0)
+    sigma = cox_f_cm2 * ss_sigma_mv / ideal_ss_mv
+    density_params = _fit_two_stage_density(
+        doses[nonzero], q_it_values[nonzero], sigma[nonzero], exponent
+    )
+    k_density, q_anneal, anneal_dose = density_params
+
     mobility_degradation = fit_mobility_degradation(
         doses,
         mobility[0],
         total_charge_slope,
-        q_it_slope,
+        density_params,
         exponent,
         cox_f_cm2,
         float(vth_mag[0]),
@@ -319,6 +409,7 @@ def calibrate_from_metrics(
         slope_factor[0],
         q_ot_slope,
         q_it_slope,
+        density_params,
         mobility_degradation,
         exponent,
         cox_f_cm2,
@@ -358,11 +449,17 @@ def calibrate_from_metrics(
         design_i = doses[train] ** exponent_i
         q_it_i = float(np.sum(q_it_values[train] * design_i) / np.sum(design_i**2))
         q_ot_i = float(total_i - q_it_i)
+        # Held-out valley point: without 200 krad the remaining swing points
+        # are all past the dip, so the anneal stage is weakly constrained and
+        # the predicted valley degrades.  That fragility is reported, not hidden.
+        density_params_i = _fit_two_stage_density(
+            doses[train], q_it_values[train], sigma[train], exponent_i
+        )
         alpha_i = fit_mobility_degradation(
             doses[train],
             mobility[0],
             total_i,
-            q_it_i,
+            density_params_i,
             exponent_i,
             cox_f_cm2,
             float(vth_mag[0]),
@@ -378,6 +475,7 @@ def calibrate_from_metrics(
             slope_factor[0],
             q_ot_i,
             q_it_i,
+            density_params_i,
             alpha_i,
             exponent_i,
             cox_f_cm2,
@@ -415,6 +513,18 @@ def calibrate_from_metrics(
         "max_abs_ss_residual_mv": float(residuals["ss_residual_mv"].abs().max()),
         "q_it_at_max_dose_c_cm2": float(q_it_slope * doses.max() ** exponent),
         "q_ot_at_max_dose_c_cm2": float(q_ot_slope * doses.max() ** exponent),
+        "qit_density_slope_c_cm2_per_krad": k_density,
+        "qit_anneal_c_cm2": q_anneal,
+        "qit_anneal_dose_krad": anneal_dose,
+        "anneal_over_generation_at_max_dose": float(
+            q_anneal
+            * -np.expm1(-doses.max() / anneal_dose)
+            / max(k_density * doses.max() ** exponent, 1e-30)
+        ),
+        "ss_valley_dose_krad": float(doses[int(np.argmin(residuals["ss_mv_data"]))]),
+        "ss_valley_residual_mv": float(
+            residuals["ss_residual_mv"].iloc[int(np.argmin(residuals["ss_mv_data"]))]
+        ),
     }
 
     return MetricCalibration(
@@ -429,6 +539,9 @@ def calibrate_from_metrics(
         dose_exponent=float(exponent),
         cox_f_cm2=float(cox_f_cm2),
         total_charge_slope_c_cm2_per_krad=float(total_charge_slope),
+        qit_density_slope_c_cm2_per_krad=k_density,
+        qit_anneal_c_cm2=q_anneal,
+        qit_anneal_dose_krad=anneal_dose,
         residuals=residuals,
         holdout=pd.DataFrame(holdout_rows),
         diagnostics=diagnostics,
@@ -469,6 +582,7 @@ def _predict(
     slope_factor0: float,
     q_ot_slope: float,
     q_it_slope: float,
+    density_params: tuple[float, float, float],
     mobility_degradation: float,
     exponent: float,
     cox_f_cm2: float,
@@ -479,13 +593,15 @@ def _predict(
 
     Gm is evaluated on the compact model itself rather than from the
     strong-inversion closed form, because the threshold and swing also move with
-    dose and both feed back into the maximum transconductance.
+    dose and both feed back into the maximum transconductance.  The threshold
+    follows the charged-trap power law only; the swing follows the two-stage
+    density law.
     """
 
     scale = doses**exponent
     q_total = (q_ot_slope + q_it_slope) * scale
     vth_mag = vth0_mag_v + q_total / cox_f_cm2
-    slope_factor = slope_factor0 + (q_it_slope * scale) / cox_f_cm2
+    slope_factor = slope_factor0 + density_net_c_cm2(doses, exponent, *density_params) / cox_f_cm2
     mobility = mobility0 / (1.0 + mobility_degradation * doses)
     gm = np.array(
         [

@@ -90,10 +90,15 @@ def test_build_config_applies_the_n_p_ratio_and_clears_linear_swing():
         q_it_c_cm2_per_krad=8.9e-9,
         mobility_degradation_per_krad=5.5e-4,
         dose_exponent=0.48,
+        qit_density_slope_c_cm2_per_krad=3.9e-8,
+        qit_anneal_c_cm2=1.1e-6,
+        qit_anneal_dose_krad=239.0,
     )
     assert config.vdd_v == 2.0
     assert config.n_device.qot_slope_c_cm2_per_krad == pytest.approx(0.8 * 2.2e-8)
     assert config.p_device.qot_slope_c_cm2_per_krad == pytest.approx(2.2e-8)
+    assert config.n_device.qit_anneal_c_cm2 == pytest.approx(0.8 * 1.1e-6)
+    assert config.p_device.qit_anneal_dose_krad == pytest.approx(239.0)
     assert config.p_device.slope_factor_per_krad == 0.0
     assert config.p_device.slope_factor_from_qit is True
     assert config.p_device.dose_exponent == pytest.approx(0.48)

@@ -31,6 +31,13 @@ class DeviceConfig:
     slope_factor_per_krad: float = 5.0e-5
     dose_exponent: float = 1.0
     slope_factor_from_qit: bool = False
+    # Two-stage swing channel: the swing senses interface-trap *density*, and
+    # irradiation first passivates a fraction of the pre-existing states
+    # (saturating anneal term) before generated states dominate (power law).
+    # All three defaults keep the legacy single-power-law behaviour.
+    qit_density_slope_c_cm2_per_krad: float = 0.0
+    qit_anneal_c_cm2: float = 0.0
+    qit_anneal_dose_krad: float = 1.0
 
     def __post_init__(self) -> None:
         if self.polarity not in ("n", "p"):
@@ -54,10 +61,14 @@ class DeviceConfig:
             "qot_slope_c_cm2_per_krad": self.qot_slope_c_cm2_per_krad,
             "qit_slope_c_cm2_per_krad": self.qit_slope_c_cm2_per_krad,
             "slope_factor_per_krad": self.slope_factor_per_krad,
+            "qit_density_slope_c_cm2_per_krad": self.qit_density_slope_c_cm2_per_krad,
+            "qit_anneal_c_cm2": self.qit_anneal_c_cm2,
         }
         for name, value in non_negative_slopes.items():
             if value < 0:
                 raise ValueError(f"{name} must be non-negative")
+        if self.qit_anneal_dose_krad <= 0:
+            raise ValueError("qit_anneal_dose_krad must be positive")
         if not 0.0 < self.dose_exponent <= 3.0:
             raise ValueError("dose_exponent must be in (0, 3]")
 

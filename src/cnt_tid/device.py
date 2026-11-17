@@ -27,6 +27,7 @@ class DeviceState:
     slope_factor: float
     qot_c_cm2: float
     qit_c_cm2: float
+    qit_density_net_c_cm2: float
 
     @property
     def delta_threshold_v(self) -> float:
@@ -60,8 +61,25 @@ def state_at_dose(
         # Eq. (3) of the literature anchor: SS = ln10 * kT/q * (1 + Cit/Cox),
         # so a swing-equivalent interface charge qit = Cox * (n - n0) is the
         # only driver of the slope factor.
-        slope_factor = config.slope_factor + qit / config.cox_f_cm2
+        density_gen = config.qit_density_slope_c_cm2_per_krad * dose_scale
+        if (
+            config.qit_density_slope_c_cm2_per_krad == 0.0
+            and config.qit_anneal_c_cm2 == 0.0
+        ):
+            # Legacy configs: the charged interface-trap channel doubles as
+            # the swing-equivalent density.
+            density_gen = qit
+        # Two-stage swing channel: a saturating anneal term passivates
+        # pre-existing interface states before the generated density wins,
+        # which is what bends the swing below its zero-dose value around the
+        # annealing dip (Cui 2023 Figure 3c at 200 krad).
+        anneal = config.qit_anneal_c_cm2 * -np.expm1(
+            -dose_krad / config.qit_anneal_dose_krad
+        )
+        density_net = density_gen - anneal
+        slope_factor = config.slope_factor + density_net / config.cox_f_cm2
     else:
+        density_net = 0.0
         slope_factor = config.slope_factor + config.slope_factor_per_krad * dose_krad
     return DeviceState(
         config=config,
@@ -72,6 +90,7 @@ def state_at_dose(
         slope_factor=float(slope_factor),
         qot_c_cm2=float(qot),
         qit_c_cm2=float(qit),
+        qit_density_net_c_cm2=float(density_net),
     )
 
 

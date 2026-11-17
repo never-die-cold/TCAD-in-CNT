@@ -1,11 +1,14 @@
 """Figure set for the P0 deliverable.
 
-Four figures, each stamped with the information it needs to be traced back:
+Six figures, each stamped with the information it needs to be traced back:
 
 fig1  frozen device structure and the provenance class of every dimension
-fig2  calibrated model versus digitized Figure 3 metrics (threshold, Gm, SS)
+fig2  calibrated model versus digitized Figure 3 metrics (threshold, Gm, SS,
+      with the two-stage swing decomposition)
 fig3  device-to-inverter dose sweep (VTC family, static metrics)
 fig4  one-at-a-time sensitivity of the inverter metrics
+fig5  inverter response across the documented assumption ranges
+fig6  cross-source threshold-drift dose laws
 """
 
 from __future__ import annotations
@@ -141,6 +144,12 @@ def plot_structure(
         ("", None, False),
         ("Dose-response laws (fitted)", None, True),
         (f"Q(D) = k D^{calibration.dose_exponent:.2f}", "calibrated", False),
+        (
+            f"swing: k D^{calibration.dose_exponent:.2f} - qa(1-exp(-D/Da))",
+            "calibrated",
+            False,
+        ),
+        (f"qa = {calibration.qit_anneal_c_cm2:.1e} C/cm2, Da = {calibration.qit_anneal_dose_krad:.0f} krad", "calibrated", False),
         (f"n-channel: symmetric complement, ratio {float(registry['assume.n_p_dose_response_ratio'].value):.1f}", "assumed", False),
     ]
     y = 0.99
@@ -162,7 +171,12 @@ def plot_structure(
     plt.close(fig)
 
 
-def plot_device_validation(validation: pd.DataFrame, holdout: pd.DataFrame, path: Path) -> None:
+def plot_device_validation(
+    validation: pd.DataFrame,
+    holdout: pd.DataFrame,
+    calibration: MetricCalibration,
+    path: Path,
+) -> None:
     """Model curves against the digitized literature metrics."""
 
     _style()
@@ -195,6 +209,19 @@ def plot_device_validation(validation: pd.DataFrame, holdout: pd.DataFrame, path
         axis.set(xlabel="Dose (krad(Si))", ylabel=ylabel, title=title)
         axis.legend(fontsize=7, loc="best")
 
+    # Two-stage decomposition on the swing panel: the dashed curve drops the
+    # anneal term, i.e. what a single generated-density law would predict.
+    if "ss_mv_dec_generation_only" in validation.columns:
+        axes[2].plot(
+            doses,
+            validation["ss_mv_dec_generation_only"].to_numpy(dtype=float),
+            "--",
+            color="#9d9d9d",
+            linewidth=1.1,
+            label="generation only (no anneal)",
+        )
+        axes[2].legend(fontsize=6.5, loc="best")
+
     box = dict(facecolor="white", edgecolor="none", alpha=0.75, pad=1.5)
     axes[0].text(0.03, 0.95, f"max residual {float(validation['vth_residual_mv'].abs().max()):.0f} mV",
                  transform=axes[0].transAxes, fontsize=7, va="top", bbox=box)
@@ -202,8 +229,18 @@ def plot_device_validation(validation: pd.DataFrame, holdout: pd.DataFrame, path
                  transform=axes[1].transAxes, fontsize=7, va="top", bbox=box)
     axes[2].text(0.03, 0.95, f"max residual {float(validation['ss_residual_mv'].abs().max()):.0f} mV/dec",
                  transform=axes[2].transAxes, fontsize=7, va="top", bbox=box)
-    axes[2].text(0.03, 0.83, "200 krad annealing dip\nis outside the monotone law",
-                 transform=axes[2].transAxes, fontsize=6.3, va="top", color="#b22222", bbox=box)
+    axes[2].text(
+        0.03,
+        0.83,
+        "two-stage swing law:\n"
+        f"anneal {calibration.qit_anneal_c_cm2:.1e} C/cm2 @ D_a "
+        f"{calibration.qit_anneal_dose_krad:.0f} krad\ndrives the 200 krad dip",
+        transform=axes[2].transAxes,
+        fontsize=6.3,
+        va="top",
+        color="#1b7837",
+        bbox=box,
+    )
     _stamp(
         fig,
         "cnt-tid p0 | fig2 | model vs digitized Figure 3 | leave-one-dose-out max "

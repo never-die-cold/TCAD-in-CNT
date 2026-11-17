@@ -86,17 +86,25 @@ def _model_metrics(config: SimulationConfig) -> pd.DataFrame:
     rows = []
     for dose in config.doses_krad:
         state = state_at_dose(config.p_device, dose, config.temperature_k)
+        # Generation-only swing (anneal term removed) visualises what the
+        # two-stage decomposition contributes in fig2.
+        anneal = config.p_device.qit_anneal_c_cm2 * -np.expm1(
+            -dose / config.p_device.qit_anneal_dose_krad
+        )
+        slope_generation_only = state.slope_factor + anneal / config.p_device.cox_f_cm2
         rows.append(
             {
                 "dose_krad": dose,
                 "q_ot_c_cm2": state.qot_c_cm2,
                 "q_it_c_cm2": state.qit_c_cm2,
+                "q_it_density_net_c_cm2": state.qit_density_net_c_cm2,
                 "mobility_m2_vs": state.mobility_m2_vs,
                 # Evaluated on the resolved device config, i.e. what the
                 # simulator actually produces rather than the closed form.
                 "vth_mag_v_check": state.threshold_v,
                 "gm_s_check": model_max_gm(config.p_device, dose, config.temperature_k),
                 "ss_mv_dec_check": ideal_ss_mv * state.slope_factor,
+                "ss_mv_dec_generation_only": ideal_ss_mv * slope_generation_only,
             }
         )
     return pd.DataFrame(rows)
@@ -150,9 +158,20 @@ def _parameters_frame(
         ("cal.q_tot_slope", calibration.total_charge_slope_c_cm2_per_krad, "C/cm2/krad^p",
          "calibrated", "total trapped-charge slope", "scales with the Cox assumption"),
         ("cal.q_it_slope", calibration.q_it_c_cm2_per_krad, "C/cm2/krad^p",
-         "calibrated", "interface-charge slope from swing", "reduced by the 200 krad dip"),
+         "calibrated", "charged interface-trap split (bookkeeping; only the "
+         "total charge is threshold-observable)",
+         "reduced by the 200 krad dip"),
         ("cal.q_ot_slope", calibration.q_ot_c_cm2_per_krad, "C/cm2/krad^p",
          "calibrated", "oxide-charge slope, remainder", "scales with the Cox assumption"),
+        ("cal.q_it_density_slope", calibration.qit_density_slope_c_cm2_per_krad,
+         "C/cm2/krad^p", "calibrated", "two-stage swing channel: generated "
+         "interface-state density slope", "scales with the Cox assumption"),
+        ("cal.q_it_anneal", calibration.qit_anneal_c_cm2, "C/cm2",
+         "calibrated", "two-stage swing channel: passivated pre-existing "
+         "interface-state equivalent (saturating)", "scales with the Cox assumption"),
+        ("cal.q_it_anneal_dose", calibration.qit_anneal_dose_krad, "krad(Si)",
+         "calibrated", "annealing dose scale of the swing channel",
+         "poorly identified: bound-constrained fit on a sparse dose grid"),
         ("cal.mobility_degradation", calibration.mobility_degradation_per_krad, "1/krad",
          "calibrated", "1/mu = (1 + alpha D)/mu0", "from the Gm dose trend"),
         ("derived.cox_f_cm2", cox, "F/cm2", "derived", "eps0 eps_r / tox",
@@ -247,6 +266,9 @@ def run_assumption_sweep(
             q_it_c_cm2_per_krad=trial_calibration.q_it_c_cm2_per_krad,
             mobility_degradation_per_krad=trial_calibration.mobility_degradation_per_krad,
             dose_exponent=trial_calibration.dose_exponent,
+            qit_density_slope_c_cm2_per_krad=trial_calibration.qit_density_slope_c_cm2_per_krad,
+            qit_anneal_c_cm2=trial_calibration.qit_anneal_c_cm2,
+            qit_anneal_dose_krad=trial_calibration.qit_anneal_dose_krad,
         )
         metrics_frame = _inverter_metrics(trial_config)
         for record in metrics_frame.to_dict(orient="records"):
@@ -302,6 +324,9 @@ def run_p0(
         q_it_c_cm2_per_krad=calibration.q_it_c_cm2_per_krad,
         mobility_degradation_per_krad=calibration.mobility_degradation_per_krad,
         dose_exponent=calibration.dose_exponent,
+        qit_density_slope_c_cm2_per_krad=calibration.qit_density_slope_c_cm2_per_krad,
+        qit_anneal_c_cm2=calibration.qit_anneal_c_cm2,
+        qit_anneal_dose_krad=calibration.qit_anneal_dose_krad,
     )
 
     (output / "config_resolved.toml").write_text(dump_config_toml(config), encoding="utf-8")
@@ -352,7 +377,7 @@ def run_p0(
     figures = output / "figures"
     figures.mkdir(exist_ok=True)
     plot_structure(registry, calibration, figures / "fig1_structure.png")
-    plot_device_validation(validation, calibration.holdout, figures / "fig2_validation.png")
+    plot_device_validation(validation, calibration.holdout, calibration, figures / "fig2_validation.png")
     plot_inverter(sweep.inverter, sweep.summary, config.vdd_v, figures / "fig3_inverter.png")
     plot_sensitivity(
         sensitivity.table, max(config.doses_krad), figures / "fig4_sensitivity.png"
@@ -385,9 +410,14 @@ def run_p0(
         "q_tot_at_max_dose_c_cm2": calibration.total_charge_slope_c_cm2_per_krad
         * max(config.doses_krad) ** calibration.dose_exponent,
         "mobility_degradation_per_krad": calibration.mobility_degradation_per_krad,
+        "qit_density_slope_c_cm2_per_krad_p": calibration.qit_density_slope_c_cm2_per_krad,
+        "qit_anneal_c_cm2": calibration.qit_anneal_c_cm2,
+        "qit_anneal_dose_krad": calibration.qit_anneal_dose_krad,
         "max_abs_vth_residual_mv": calibration.diagnostics["max_abs_vth_residual_mv"],
         "max_abs_gm_residual_rel": calibration.diagnostics["max_abs_gm_residual_rel"],
         "max_abs_ss_residual_mv": calibration.diagnostics["max_abs_ss_residual_mv"],
+        "ss_valley_dose_krad": calibration.diagnostics["ss_valley_dose_krad"],
+        "ss_valley_residual_mv": calibration.diagnostics["ss_valley_residual_mv"],
         "model_vs_closed_form_vth_mv": consistency_mv,
         "model_vs_closed_form_gm_rel": consistency_gm,
         "holdout_max_abs_vth_residual_mv": float(

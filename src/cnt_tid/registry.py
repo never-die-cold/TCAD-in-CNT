@@ -146,13 +146,19 @@ def build_simulation_config(
     q_it_c_cm2_per_krad: float,
     mobility_degradation_per_krad: float,
     dose_exponent: float,
+    qit_density_slope_c_cm2_per_krad: float,
+    qit_anneal_c_cm2: float,
+    qit_anneal_dose_krad: float,
 ) -> SimulationConfig:
     """Build the P0 simulation config from registered structure/bias values.
 
     The n-type device is a documented symmetric-complement assumption: the same
     geometry, zero-dose parameters and dose response, scaled by
     `assume.n_p_dose_response_ratio`.  Only the p-type response is anchored on
-    measured data, so the inverter result is conditional on that ratio.
+    measured data, so the inverter result is conditional on that ratio.  The
+    two-stage swing channel (generated density minus saturating anneal) scales
+    with the same ratio; the anneal dose scale is a kinetic quantity and is
+    not scaled.
     """
 
     ratio = number(registry, "assume.n_p_dose_response_ratio")
@@ -171,6 +177,9 @@ def build_simulation_config(
             qot_slope_c_cm2_per_krad=q_ot_c_cm2_per_krad * scale,
             qit_slope_c_cm2_per_krad=q_it_c_cm2_per_krad * scale,
             mobility_degradation_per_krad=mobility_degradation_per_krad * scale,
+            qit_density_slope_c_cm2_per_krad=qit_density_slope_c_cm2_per_krad * scale,
+            qit_anneal_c_cm2=qit_anneal_c_cm2 * scale,
+            qit_anneal_dose_krad=qit_anneal_dose_krad,
             slope_factor_per_krad=0.0,
             dose_exponent=dose_exponent,
             slope_factor_from_qit=True,

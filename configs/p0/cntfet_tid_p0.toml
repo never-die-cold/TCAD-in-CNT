@@ -20,10 +20,13 @@ slope_factor = 3.4934230447290013
 channel_length_modulation = 0.02
 qot_slope_c_cm2_per_krad = 2.219220216809432e-08
 qit_slope_c_cm2_per_krad = 8.8981768410492976e-09
-mobility_degradation_per_krad = 0.00043292117757253622
+mobility_degradation_per_krad = 0.00042668764649487096
 slope_factor_per_krad = 0.0
 dose_exponent = 0.48175931953027079
 slope_factor_from_qit = true
+qit_density_slope_c_cm2_per_krad = 3.9034450727689051e-08
+qit_anneal_c_cm2 = 1.066231175466382e-06
+qit_anneal_dose_krad = 239.00270301264729
 
 [p_device]
 polarity = "p"
@@ -37,7 +40,10 @@ slope_factor = 3.4934230447290013
 channel_length_modulation = 0.02
 qot_slope_c_cm2_per_krad = 2.219220216809432e-08
 qit_slope_c_cm2_per_krad = 8.8981768410492976e-09
-mobility_degradation_per_krad = 0.00043292117757253622
+mobility_degradation_per_krad = 0.00042668764649487096
 slope_factor_per_krad = 0.0
 dose_exponent = 0.48175931953027079
 slope_factor_from_qit = true
+qit_density_slope_c_cm2_per_krad = 3.9034450727689051e-08
+qit_anneal_c_cm2 = 1.066231175466382e-06
+qit_anneal_dose_krad = 239.00270301264729
