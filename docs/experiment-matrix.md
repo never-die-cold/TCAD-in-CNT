@@ -12,6 +12,15 @@
 | 栅氧厚度 | 标称值；敏感性 ±20% | 检验 `ΔV ∝ Q/Cox` 的影响 |
 | 栅长 | 标称值；敏感性 ±20% | 短沟道效应需由 TCAD/数据约束 |
 
+当前可用以下命令执行紧凑模型的 3×3 几何矩阵；每个场景仍包含配置中的全部剂量点：
+
+```bash
+cnt-tid matrix --config configs/baseline.toml --output results/matrix \
+    --oxide-scales 0.8 1.0 1.2 --length-scales 0.8 1.0 1.2
+```
+
+该命令同步缩放 n/p 器件，不代表已完成非对称器件或短沟道效应标定。逐场景状态和失败日志见 `matrix_manifest.csv` 与 `runs/<场景>/failure.txt`。
+
 ## 每个剂量点必须保存
 
 - `Id–Vg` 原始曲线及扫描方向；

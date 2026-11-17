@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import tomllib
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
@@ -111,6 +113,15 @@ class SimulationConfig:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def config_sha256(config: SimulationConfig) -> str:
+    """Hash the canonical effective configuration, independent of TOML formatting."""
+
+    canonical = json.dumps(
+        config.to_dict(), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _construct(cls: type[Any], values: dict[str, Any]) -> Any:

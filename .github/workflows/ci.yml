@@ -52,3 +52,6 @@ jobs:
       - run: >-
           cnt-tid sensitivity --config configs/smoke.toml
           --output results/ci-sensitivity --params n.qot_slope p.threshold_v
+      - run: >-
+          cnt-tid matrix --config configs/smoke.toml --output results/ci-matrix
+          --oxide-scales 0.8 1.0 --length-scales 0.8 1.0

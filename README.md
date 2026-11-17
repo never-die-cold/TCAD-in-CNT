@@ -2,7 +2,7 @@
 
 面向**碳纳米管场效应晶体管（CNTFET）与碳基 CMOS 集成电路总电离剂量（TID）效应**的可复现仿真项目。当前版本打通“器件剂量扫描 → 电学退化 → 反相器静态特性”的最小闭环，并为 Sentaurus 等 TCAD 求解器预留标定与数据接口。
 
-> **状态声明：v0.1 是可运行的等效紧凑模型基线，不是已完成标定的三维量子 TCAD 模型。** 默认剂量系数仅用于验证流程，不能直接用于器件寿命预测或抗辐射指标声明。
+> **状态声明：当前是可运行的等效紧凑模型，不是已完成标定的三维量子 TCAD 模型。** 默认剂量系数仅用于验证流程，不能直接用于器件寿命预测或抗辐射指标声明。
 
 ## 当前能力
 
@@ -12,6 +12,7 @@
 - 求解互补 CNTFET 反相器 VTC，提取 `VM`、`VIL`、`VIH`、`NML`、`NMH`；
 - **标定模式**：从 `data/calibration_template.csv` 格式的实测/TCAD 曲线拟合剂量系数，含留一剂量点交叉验证，输出可直接回灌的 TOML 配置；
 - **敏感性分析**：对关键参数做 ±10% 逐个扰动（OAT），输出归一化灵敏度表和龙卷风图；
+- **几何实验矩阵**：联合扫描栅氧厚度与栅长，保留每个场景的完整曲线、配置指纹、警告与失败日志；
 - 一键输出 CSV、元数据 JSON 和 PNG 图，配置采用严格 TOML 校验；
 - 自动测试覆盖阈值漂移方向、电流边界、反相器电平、标定还原、灵敏度符号和完整运行流程。
 
@@ -67,6 +68,17 @@ cnt-tid sensitivity --config configs/baseline.toml --output results/sensitivity
 
 对 12 个关键参数（两个器件的阈值、迁移率、`Qot`/`Qit` 斜率、迁移率退化和摆幅退化系数）做 ±10% 逐个扰动，输出 `sensitivity.csv`、`sensitivity_baseline.csv` 和 `sensitivity_tornado.png`。可用 `--magnitude` 调整扰动幅度、`--params` 指定参数子集。
 
+### 几何实验矩阵
+
+```bash
+cnt-tid matrix --config configs/baseline.toml --output results/matrix \
+    --oxide-scales 0.8 1.0 1.2 --length-scales 0.8 1.0 1.2
+```
+
+对两种几何倍率做笛卡尔积，并同步缩放 n/p 器件；每个场景执行完整剂量扫描。默认 3×3 矩阵对应实验计划中的几何 ±20% 扰动。`matrix_summary.csv` 汇总所有成功场景，`matrix_manifest.csv` 记录通过/失败状态；失败场景保留 `failure.txt`，警告写入 `warnings.txt`，不会因单点失败而跳过其余场景。存在失败场景时 CLI 返回非零退出码。
+
+`metadata.json` 和 `matrix_metadata.json` 中的 `config_sha256` 是规范化有效配置的 SHA-256，与 TOML 空格或字段顺序无关，可用于核对结果与配置是否一致。
+
 ## 输出文件
 
 ### `cnt-tid run`
@@ -96,6 +108,16 @@ cnt-tid sensitivity --config configs/baseline.toml --output results/sensitivity
 | `sensitivity.csv` | 参数 × 方向 × 指标的灵敏度长表 |
 | `sensitivity_baseline.csv` | 未扰动的基准指标随剂量变化 |
 | `sensitivity_tornado.png` | 最大剂量处 VM/NML/NMH 的龙卷风图 |
+
+### `cnt-tid matrix`
+
+| 文件 | 内容 |
+| --- | --- |
+| `matrix_summary.csv` | 所有成功场景的几何、剂量与器件/电路指标 |
+| `matrix_manifest.csv` | 每个场景的状态、输出路径、警告路径与错误摘要 |
+| `matrix_metadata.json` | 矩阵定义、基础配置、配置指纹和通过/失败计数 |
+| `matrix_metrics.png` | 最大剂量处 VM/NML/NMH 的几何倍率热图 |
+| `runs/<场景>/` | 与单次 `run` 相同的完整曲线、摘要、图和元数据 |
 
 ## 仓库结构
 

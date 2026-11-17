@@ -12,7 +12,7 @@ import pandas as pd
 
 from . import __version__
 from .circuit import solve_inverter
-from .config import SimulationConfig
+from .config import SimulationConfig, config_sha256
 from .device import drain_current, state_at_dose
 from .plotting import plot_all
 
@@ -106,6 +106,7 @@ def run_simulation(config: SimulationConfig, output_dir: str | Path) -> Simulati
         "created_utc": datetime.now(UTC).isoformat(),
         "dose_unit": config.dose_unit,
         "warning": "Illustrative results are not device predictions until calibrated.",
+        "config_sha256": config_sha256(config),
         "config": config.to_dict(),
     }
     with (destination / "metadata.json").open("w", encoding="utf-8") as handle:

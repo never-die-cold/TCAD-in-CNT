@@ -16,6 +16,7 @@ from .calibration import (
     load_measurements,
 )
 from .config import load_config
+from .matrix import run_matrix
 from .sensitivity import PARAMETERS, run_sensitivity
 from .workflow import run_simulation
 
@@ -51,6 +52,26 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="*",
         default=None,
         help=f"parameters to perturb (default: all). Choices: {', '.join(PARAMETERS)}",
+    )
+
+    matrix_cmd = subparsers.add_parser(
+        "matrix", help="run a traceable dose-by-geometry experiment matrix"
+    )
+    matrix_cmd.add_argument("--config", type=Path, default=Path("configs/baseline.toml"))
+    matrix_cmd.add_argument("--output", type=Path, default=Path("results/matrix"))
+    matrix_cmd.add_argument(
+        "--oxide-scales",
+        type=float,
+        nargs="+",
+        default=(0.8, 1.0, 1.2),
+        help="oxide thickness multipliers (default: 0.8 1.0 1.2)",
+    )
+    matrix_cmd.add_argument(
+        "--length-scales",
+        type=float,
+        nargs="+",
+        default=(0.8, 1.0, 1.2),
+        help="gate length multipliers (default: 0.8 1.0 1.2)",
     )
     return parser
 
@@ -119,6 +140,23 @@ def _cmd_sensitivity(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_matrix(args: argparse.Namespace) -> int:
+    config = load_config(args.config)
+    result = run_matrix(
+        config,
+        args.output,
+        oxide_scales=tuple(args.oxide_scales),
+        length_scales=tuple(args.length_scales),
+    )
+    passed_count = len(result.manifest) - result.failed_count
+    print(f"Matrix complete: {result.output_dir.resolve()}")
+    print(f"Scenarios: {passed_count} passed, {result.failed_count} failed")
+    if result.failed_count:
+        print("Inspect matrix_manifest.csv and the per-scenario failure.txt files")
+        return 1
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
@@ -127,6 +165,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_calibrate(args)
     if args.command == "sensitivity":
         return _cmd_sensitivity(args)
+    if args.command == "matrix":
+        return _cmd_matrix(args)
     return 2
 
 

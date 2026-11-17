@@ -25,3 +25,4 @@ def test_workflow_writes_complete_artifacts(tmp_path: Path) -> None:
     assert (artifacts.summary["nmh_v"] > 0).all()
     metadata = json.loads((tmp_path / "metadata.json").read_text(encoding="utf-8"))
     assert metadata["calibration_status"] == "illustrative_uncalibrated"
+    assert len(metadata["config_sha256"]) == 64
