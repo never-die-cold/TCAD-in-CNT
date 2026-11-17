@@ -9,7 +9,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
+from .annealing import plot_annealing_recovery, write_annealing_artifacts
 from .calibration import (
     apply_calibration,
     calibrate,
@@ -138,6 +140,23 @@ def build_parser() -> argparse.ArgumentParser:
     predict_cmd.add_argument("--output", type=Path, default=Path("results/predict"))
     predict_cmd.add_argument(
         "--figure", type=Path, default=Path("docs/figures/p0/fig9_prediction_bands.png")
+    )
+
+    anneal_cmd = subparsers.add_parser(
+        "anneal",
+        help="post-irradiation annealing recovery scenario (registry-assumed kinetics)",
+    )
+    anneal_cmd.add_argument("--config", type=Path, default=Path("configs/p0/cntfet_tid_p0.toml"))
+    anneal_cmd.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    anneal_cmd.add_argument(
+        "--times-s",
+        type=float,
+        nargs="+",
+        default=(0.0, 3600.0, 86400.0, 604800.0, 2592000.0),
+    )
+    anneal_cmd.add_argument("--output", type=Path, default=Path("results/anneal"))
+    anneal_cmd.add_argument(
+        "--figure", type=Path, default=Path("docs/figures/p0/fig10_annealing.png")
     )
 
     tcad_cmd = subparsers.add_parser(
@@ -354,6 +373,32 @@ def _cmd_predict(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_anneal(args: argparse.Namespace) -> int:
+    config = load_config(args.config)
+    registry = load_registry(args.registry)
+    fraction = number(registry, "assume.annealed_charge_fraction")
+    tau_s = number(registry, "assume.annealing_time_constant_s")
+    scan_path, metadata = write_annealing_artifacts(
+        config, fraction, tau_s, tuple(args.times_s), args.output
+    )
+    if args.figure is not None:
+        scan = pd.read_csv(scan_path)
+        plot_annealing_recovery(scan, args.figure)
+        print(f"Recovery figure written: {args.figure.resolve()}")
+    print(f"Annealing scenario written: {scan_path.resolve()}")
+    print(
+        f"  fraction f = {fraction:g}, tau = {tau_s:g} s "
+        f"(registry assumptions; no annealing data in either anchor paper)"
+    )
+    subset = pd.read_csv(scan_path).query("dose_krad == dose_krad.max()")
+    for _, row in subset.iterrows():
+        print(
+            f"  t = {row['time_label']:>13s}: VM {row['vm_v']:.3f} V, "
+            f"SS {row['ss_mv_dec']:.0f} mV/dec, f = {row['frequency_hz']:.3e} Hz"
+        )
+    return 0
+
+
 def _cmd_ringosc(args: argparse.Namespace) -> int:
     config = load_config(args.config)
     artifacts = write_ring_oscillator_artifacts(config, args.output)
@@ -454,6 +499,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_mc(args)
     if args.command == "predict":
         return _cmd_predict(args)
+    if args.command == "anneal":
+        return _cmd_anneal(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":

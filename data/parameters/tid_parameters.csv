@@ -17,3 +17,5 @@ dev.buried_oxide_thickness_nm,tbox,280,nm,reported,"Cui 2023 Section 2 page 3",,
 dev.substrate_thickness_nm,tsub,500000,nm,reported,"Cui 2023 Section 2 page 3",,,truncated in any TCAD mesh
 dev.channel_length_modulation,lambda,0.02,1/V,convention,"cnt-tid compact model",,,does not affect the extracted metrics at Vds = 0.1 V
 assume.n_p_dose_response_ratio,k_n_over_k_p,1.0,1,assumed,"Cui 2023 reports only p-type devices; n-type is a symmetric-complement assumption",n response = ratio * p response,0.5-1.5,conditional driver of the inverter result (see fig4)
+assume.annealed_charge_fraction,f,0.3,1,assumed,"no annealing data in either anchor paper; scenario exploration of post-irradiation recovery",fraction of dose-built charge that anneals with time constant tau,0.1-0.6,applied identically to Qot/Qit/density channels (simplest assumption)
+assume.annealing_time_constant_s,tau,1e4,s,assumed,"room-temperature trap annealing order-of-magnitude from TID literature",exponential annealing time constant after irradiation stops,1e3-1e6 s,scenario parameter; dose-rate dependence still absent
