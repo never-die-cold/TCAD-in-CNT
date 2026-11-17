@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "paper": "Ding et al., Electronics 2023, 12, 1000",
+  "pdf": "reference\\literature\\electronics-12-01000.pdf",
+  "pdf_sha256": "c69262f93cb64a9ddb146df9a2495da58dcc9be11f056b40488a0a0cf5d87537",
+  "pymupdf_version": "2.1",
+  "dose_grid_krad_si": [
+    0.0,
+    200.0,
+    500.0,
+    1000.0,
+    2000.0,
+    3000.0
+  ],
+  "panels": {
+    "vth_v": {
+      "x_slope_krad_per_pt": 17.299981606639278,
+      "x_intercept_krad": -3965.703492250321,
+      "x_max_residual_krad": 0.48067683893987123,
+      "y_slope_per_pt": -0.009775160567632305,
+      "y_intercept": 5.128671278604603,
+      "y_max_residual": 1.1102230246251565e-15,
+      "n_y_labels": 8,
+      "n_x_labels": 7
+    },
+    "gm_max_s": {
+      "x_slope_krad_per_pt": 17.305125972310357,
+      "x_intercept_krad": -3977.844147198138,
+      "x_max_residual_krad": 0.6056884723761868,
+      "y_slope_per_pt": -5.193992750342572e-08,
+      "y_intercept": 1.672639027862204e-05,
+      "y_max_residual": 1.419768236286009e-09,
+      "n_y_labels": 9,
+      "n_x_labels": 7
+    },
+    "ss_mv_dec": {
+      "x_slope_krad_per_pt": 17.305125972310357,
+      "x_intercept_krad": -3977.844147198138,
+      "x_max_residual_krad": 0.6056884723761868,
+      "y_slope_per_pt": -0.5802322433767965,
+      "y_intercept": 437.39119600779696,
+      "y_max_residual": 0.015308357308725817,
+      "n_y_labels": 10,
+      "n_x_labels": 7
+    }
+  },
+  "note": "Values are read from vector markers, not typed by hand; the overlay image is the human audit artifact."
+}

@@ -18,6 +18,7 @@ from .calibration import (
 )
 from .config import load_config
 from .matrix import run_matrix
+from .p0 import DEFAULT_METRICS, DEFAULT_REGISTRY, run_p0
 from .sensitivity import PARAMETERS, run_sensitivity
 from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
 from .tcad_project import render_tcad_project
@@ -76,6 +77,19 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         default=(0.8, 1.0, 1.2),
         help="gate length multipliers (default: 0.8 1.0 1.2)",
+    )
+
+    p0_cmd = subparsers.add_parser(
+        "p0", help="run the complete P0 deliverable (calibrate, sweep, validate, plot)"
+    )
+    p0_cmd.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
+    p0_cmd.add_argument("--metrics", type=Path, default=DEFAULT_METRICS)
+    p0_cmd.add_argument("--output", type=Path, default=Path("results/p0"))
+    p0_cmd.add_argument(
+        "--publish-dir",
+        type=Path,
+        default=Path("docs/figures/p0"),
+        help="copy the figure set here; results/ is not tracked by git",
     )
 
     tcad_cmd = subparsers.add_parser(
@@ -197,6 +211,29 @@ def _cmd_matrix(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_p0(args: argparse.Namespace) -> int:
+    result = run_p0(args.registry, args.metrics, args.output, args.publish_dir)
+    numbers = result.key_numbers
+    print(f"P0 complete: {result.output_dir.resolve()}")
+    print(
+        f"  dose exponent p = {numbers['dose_exponent']:.3f}, "
+        f"Q_it = {numbers['q_it_slope_c_cm2_per_krad_p']:.3e}, "
+        f"Q_ot = {numbers['q_ot_slope_c_cm2_per_krad_p']:.3e} C/cm2/krad^p"
+    )
+    print(
+        f"  |Vth| shift at {numbers['dose_max_krad']:g} krad: "
+        f"{numbers['vth_shift_at_max_dose_v']:.3f} V; VM {numbers['vm_v_at_zero_dose']:.3f} -> "
+        f"{numbers['vm_v_at_max_dose']:.3f} V"
+    )
+    print(
+        f"  residuals: |dVth| <= {numbers['max_abs_vth_residual_mv']:.1f} mV, "
+        f"dGm <= {100 * numbers['max_abs_gm_residual_rel']:.1f} %, "
+        f"dSS <= {numbers['max_abs_ss_residual_mv']:.1f} mV/dec"
+    )
+    print(f"  leave-one-dose-out |dVth| max = {numbers['holdout_max_abs_vth_residual_mv']:.1f} mV")
+    return 0
+
+
 def _cmd_tcad_smoke(args: argparse.Namespace) -> int:
     if not args.vmrun or not args.vmx:
         raise ValueError("--vmrun and --vmx are required (or set TCAD_VMRUN and TCAD_VMX)")
@@ -250,6 +287,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_sensitivity(args)
     if args.command == "matrix":
         return _cmd_matrix(args)
+    if args.command == "p0":
+        return _cmd_p0(args)
     if args.command == "tcad-smoke":
         return _cmd_tcad_smoke(args)
     if args.command == "tcad-prepare":

@@ -78,19 +78,23 @@ def solve_inverter(
     vin = np.linspace(0.0, vdd_v, points)
     vout = np.empty_like(vin)
     for index, input_v in enumerate(vin):
-        vout[index] = brentq(
-            _current_balance,
-            0.0,
-            vdd_v,
-            args=(input_v, n_state, p_state, vdd_v),
-            xtol=1e-12,
-        )
+        args = (input_v, n_state, p_state, vdd_v)
+        low = _current_balance(0.0, *args)
+        high = _current_balance(vdd_v, *args)
+        if low > 0.0:
+            # More n-current than p-current even at Vout = 0: rail-pinned low.
+            vout[index] = 0.0
+        elif high < 0.0:
+            # More p-current than n-current even at Vout = Vdd: rail-pinned high.
+            vout[index] = vdd_v
+        else:
+            vout[index] = brentq(_current_balance, 0.0, vdd_v, args=args, xtol=1e-12)
 
     gain = np.gradient(vout, vin)
     gain_error = np.abs(gain) - 1.0
     vil = _crossing(vin, gain_error, 0.0)
     vih = _last_crossing(vin, gain_error, 0.0)
-    vm = _crossing(vin, vout - vin, 0.0)
+    vm = _crossing(vin, vout - vin, 0.0)  # NaN when the VTC never crosses Vout = Vin
     if np.isnan(vil) or np.isnan(vih) or np.isnan(vm):
         warnings.warn(
             "inverter crossing extraction failed (VIL/VIH/VM is NaN); "

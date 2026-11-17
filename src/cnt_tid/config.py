@@ -29,6 +29,8 @@ class DeviceConfig:
     qit_slope_c_cm2_per_krad: float = 2.0e-12
     mobility_degradation_per_krad: float = 2.0e-4
     slope_factor_per_krad: float = 5.0e-5
+    dose_exponent: float = 1.0
+    slope_factor_from_qit: bool = False
 
     def __post_init__(self) -> None:
         if self.polarity not in ("n", "p"):
@@ -56,6 +58,8 @@ class DeviceConfig:
         for name, value in non_negative_slopes.items():
             if value < 0:
                 raise ValueError(f"{name} must be non-negative")
+        if not 0.0 < self.dose_exponent <= 3.0:
+            raise ValueError("dose_exponent must be in (0, 3]")
 
     @property
     def width_m(self) -> float:

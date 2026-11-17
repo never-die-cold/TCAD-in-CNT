@@ -1,0 +1,19 @@
+source,device_id,polarity,dose_value,dose_unit,vds_signed_v,metric,value,unit,err_minus,err_plus,figure,panel,page,pdf_x_pt,pdf_y_pt,extraction_method,quality
+Cui2023,cui2023_cnt_network_p,p,0,krad(Si),-0.1,vth_v,-0.529954,V,0.051,0.0516,Figure 3,a,4,229.22,578.88,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,200,krad(Si),-0.1,vth_v,-0.799455,V,0.0736,0.0748,Figure 3,a,4,240.80,606.45,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,500,krad(Si),-0.1,vth_v,-1.03963,V,0.107,0.109,Figure 3,a,4,258.14,631.02,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,1000,krad(Si),-0.1,vth_v,-1.154,V,0.116,0.117,Figure 3,a,4,287.03,642.72,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,2000,krad(Si),-0.1,vth_v,-1.46925,V,0.0613,0.0619,Figure 3,a,4,344.87,674.97,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,3000,krad(Si),-0.1,vth_v,-1.62233,V,0.0584,0.0601,Figure 3,a,4,402.65,690.63,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,0,krad(Si),-0.1,gm_max_s,1.06838e-05,S,1.64e-07,1.67e-07,Figure 3,b,5,229.85,116.34,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,200,krad(Si),-0.1,gm_max_s,9.64599e-06,S,1.48e-07,1.57e-07,Figure 3,b,5,241.43,136.32,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,500,krad(Si),-0.1,gm_max_s,8.63628e-06,S,3.1e-07,3.16e-07,Figure 3,b,5,258.77,155.76,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,1000,krad(Si),-0.1,gm_max_s,7.38504e-06,S,7.26e-07,7.35e-07,Figure 3,b,5,287.63,179.85,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,2000,krad(Si),-0.1,gm_max_s,5.20824e-06,S,4.29e-07,4.35e-07,Figure 3,b,5,345.47,221.76,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,3000,krad(Si),-0.1,gm_max_s,4.11906e-06,S,2.84e-07,2.87e-07,Figure 3,b,5,403.25,242.73,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,0,krad(Si),-0.1,ss_mv_dec,207.951,mV/dec,8.53,8.56,Figure 3,c,5,229.85,395.43,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,200,krad(Si),-0.1,ss_mv_dec,185.391,mV/dec,16,16,Figure 3,c,5,241.43,434.31,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,500,krad(Si),-0.1,ss_mv_dec,202.38,mV/dec,2.4,2.51,Figure 3,c,5,258.77,405.03,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,1000,krad(Si),-0.1,ss_mv_dec,207.55,mV/dec,0.366,0.4,Figure 3,c,5,287.63,396.12,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,2000,krad(Si),-0.1,ss_mv_dec,230.493,mV/dec,1.62,1.69,Figure 3,c,5,345.47,356.58,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review
+Cui2023,cui2023_cnt_network_p,p,3000,krad(Si),-0.1,ss_mv_dec,241.059,mV/dec,4.14,4.21,Figure 3,c,5,403.25,338.37,pdf_vectors:PyMuPDF-2.1,machine_extracted_pending_review

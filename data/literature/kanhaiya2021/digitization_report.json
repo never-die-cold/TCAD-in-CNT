@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "paper": "Kanhaiya et al., ACS Nano 2021, 15, 17310-17318",
+  "pdf": "reference\\literature\\nn1c04194.pdf",
+  "pdf_sha256": "f72c2be90d71a5f01115941b8bf987c54d383717ae81293a636d658455e1b729",
+  "pymupdf_version": "2.1",
+  "panels": {
+    "fig3e": {
+      "x_slope": 7.868373835781206,
+      "x_intercept": -3172.594223055717,
+      "y_slope": -11.225077415007249,
+      "y_intercept": 4815.2034653885285,
+      "n_x_ticks": 5,
+      "n_y_ticks": 6,
+      "series": [
+        "top_gate",
+        "local_bottom_gate",
+        "dual_gate"
+      ]
+    },
+    "fig4": {
+      "x_slope": 0.06527987773441021,
+      "x_intercept": -24.60996448358529,
+      "y_slope": -6.893693296245829,
+      "y_intercept": 1291.8341227711783,
+      "n_x_ticks": 8,
+      "n_y_ticks": 9,
+      "series": [
+        "local_bottom_gate_thick",
+        "local_bottom_gate_thin",
+        "dual_gate_thick",
+        "dual_gate_thin"
+      ]
+    }
+  },
+  "note": "Curve centrelines are recovered from the filled outline polygons; error bars are separate shapes and are not part of the centreline."
+}

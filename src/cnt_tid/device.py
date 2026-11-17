@@ -45,14 +45,24 @@ def state_at_dose(
 
     if dose_krad < 0 or temperature_k <= 0:
         raise ValueError("dose_krad must be non-negative and temperature_k positive")
-    qot = config.qot_slope_c_cm2_per_krad * dose_krad
-    qit = config.qit_slope_c_cm2_per_krad * dose_krad
+    # Power-law build-up: Q = k * D**p.  p = 1 reproduces the original linear
+    # law; p < 1 describes the sub-linear trap build-up seen in the literature
+    # anchors (see docs/p0-report.md).
+    dose_scale = float(dose_krad) ** config.dose_exponent
+    qot = config.qot_slope_c_cm2_per_krad * dose_scale
+    qit = config.qit_slope_c_cm2_per_krad * dose_scale
     charge_shift = (qot + qit) / config.cox_f_cm2
     threshold = config.threshold_v + (-charge_shift if config.polarity == "n" else charge_shift)
     mobility = config.mobility_m2_vs / (
         1.0 + config.mobility_degradation_per_krad * dose_krad
     )
-    slope_factor = config.slope_factor + config.slope_factor_per_krad * dose_krad
+    if config.slope_factor_from_qit:
+        # Eq. (3) of the literature anchor: SS = ln10 * kT/q * (1 + Cit/Cox),
+        # so a swing-equivalent interface charge qit = Cox * (n - n0) is the
+        # only driver of the slope factor.
+        slope_factor = config.slope_factor + qit / config.cox_f_cm2
+    else:
+        slope_factor = config.slope_factor + config.slope_factor_per_krad * dose_krad
     return DeviceState(
         config=config,
         dose_krad=float(dose_krad),

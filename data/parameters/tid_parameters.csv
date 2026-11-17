@@ -1,0 +1,18 @@
+param_id,symbol,value,unit,provenance,source,derivation,uncertainty,notes
+sim.name,name,cui2023_topgate_p0,,convention,cnt-tid p0,,,"run identifier"
+sim.vdd_v,VDD,2.0,V,assumed,"project decision: supply at the paper's |VDS| = 2 V saturation bias",,1.5-2.5 V,inverter sweep supply
+sim.temperature_k,T,300,K,assumed,"paper reports room temperature without a value",,295-305 K,numerical assumption
+sim.dose_unit,unit,krad(Si),,reported,"Cui 2023 Section 2 and Table 1",,,kept in krad(Si); no krad(SiO2) conversion applied
+sim.doses_krad,doses,"0,200,500,1000,2000,3000",krad(Si),reported,"Cui 2023 Section 2 and Figure 2",,,""
+sim.transfer_points,points,401,1,convention,cnt-tid p0,,,Id-Vg sweep grid
+sim.inverter_points,points,1001,1,convention,cnt-tid p0,,,VTC sweep grid
+sim.calibration_status,status,calibrated_compact_fit_metrics,,calibrated,"cnt-tid p0 calibration stage",,,set only when the metric calibration succeeds
+dev.width_um,W,30.0,um,reported,"Cui 2023 Section 2 page 3",,,gate width into the page
+dev.length_nm,Lg,4000,nm,reported,"Cui 2023 Section 2 page 3",,,4 um gate length
+dev.oxide_thickness_nm,tox,10,nm,reported,"Cui 2023 Section 2 page 3",,,Y2O3/HfO2 total thickness
+dev.oxide_relative_permittivity,eps_r,15,1,assumed,"series equivalent of Y2O3 (13-15) and HfO2 (20-25); layer split not reported",series tox/(t1/eps1+t2/eps2),12-20,"sets Cox and therefore every charge value"
+dev.channel_thickness_nm,tch,5,nm,assumed,"effective CNT-network film thickness",,2-10,schematic only; not used by the compact model
+dev.buried_oxide_thickness_nm,tbox,280,nm,reported,"Cui 2023 Section 2 page 3",,,back-gate oxide
+dev.substrate_thickness_nm,tsub,500000,nm,reported,"Cui 2023 Section 2 page 3",,,truncated in any TCAD mesh
+dev.channel_length_modulation,lambda,0.02,1/V,convention,"cnt-tid compact model",,,does not affect the extracted metrics at Vds = 0.1 V
+assume.n_p_dose_response_ratio,k_n_over_k_p,1.0,1,assumed,"Cui 2023 reports only p-type devices; n-type is a symmetric-complement assumption",n response = ratio * p response,0.5-1.5,conditional driver of the inverter result (see fig4)

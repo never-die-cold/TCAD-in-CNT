@@ -4,6 +4,30 @@
 
 > **模型范围：当前版本实现“剂量—陷阱电荷—紧凑电学参数—电路响应”的等效链路。** 默认剂量系数用于流程验证，器件寿命与抗辐射指标的定量评估以实验或 TCAD 标定为前提。
 
+## P0 结项成果（v0.5.0）
+
+P0 的"明确结构 + 可追溯 TID 参数 + 器件/反相器剂量扫描 + 标定/敏感性 + 可复现图表"已经用一条命令闭环：
+
+```bash
+cnt-tid p0
+```
+
+| 环节 | 产物 |
+| --- | --- |
+| 结构冻结 | `configs/p0/cntfet_tid_p0.toml`、[图 1](docs/figures/p0/fig1_structure.png)、`data/parameters/tid_parameters.csv` |
+| 参数溯源 | `scripts/digitize_cui2023_fig3.py` → `data/literature/cui2023_topgate/fig3_metrics_digitized.csv` → `results/p0/parameters_resolved.csv` |
+| 标定/验证 | [图 2](docs/figures/p0/fig2_validation.png)、`results/p0/calibration/` |
+| 器件+反相器扫描 | [图 3](docs/figures/p0/fig3_inverter.png)、`results/p0/dose_sweep/` |
+| 敏感性/不确定性 | [图 4](docs/figures/p0/fig4_sensitivity.png)、[图 5](docs/figures/p0/fig5_robustness.png) |
+| 跨文献校验 | [图 6](docs/figures/p0/fig6_cross_source.png)、`results/p0/cross_source/` |
+| 可复现 | `results/p0/manifest.json`（输入与全部输出的 SHA-256） |
+
+关键结果：幂律剂量指数 p = 0.482，Q_it = 8.90 × 10⁻⁹、Q_ot = 2.22 × 10⁻⁸ C/cm²/krad^p，3 Mrad(Si) 下 |ΔVth| = 1.108 V；反相器 VM 由 1.000 V 塌到 0.129 V，NML/NMH 损失 84 %/71 %。阈值残差 ≤ 42 mV，留一剂量点残差 ≤ 66 mV。
+
+跨文献校验（Cui 2023 + Kanhaiya 2021，7 个器件变体，0.1–10 Mrad）表明：剂量律的指数随结构在 **0.23–0.85** 之间变化，把一条拟合律迁移到另一个结构、即使锚定一个实测点仍有 **2–5 倍**误差。**TID 参数必须绑定结构**，不能作为器件无关常数引用。
+
+完整推导、验证与局限见 **[P0 结项报告](docs/p0-report.md)**。所有结果标注 `calibrated_compact_fit_metrics`，即"经文献图表标定的等效紧凑模型"，而不是器件预测。
+
 ## 当前能力
 
 - 以氧化层陷阱电荷 `Qot` 和界面陷阱电荷 `Qit` 驱动阈值漂移；
@@ -132,13 +156,27 @@ CNTFET 方向已建立 Cui 2023 顶栅 P 型 CNT 网络器件的数据清单和 
 | `matrix_metrics.png` | 最大剂量处 VM/NML/NMH 的几何倍率热图 |
 | `runs/<场景>/` | 与单次 `run` 相同的完整曲线、摘要、图和元数据 |
 
+### `cnt-tid p0`（结项流水线）
+
+| 文件 | 内容 |
+| --- | --- |
+| `config_resolved.toml` | 由参数注册表 + 标定结果生成的完整配置，可直接用于 `cnt-tid run` |
+| `parameters_resolved.csv` | 全部参数、溯源类别（reported/digitized/derived/assumed/calibrated）、来源与不确定性 |
+| `calibration/` | 残差表、留一剂量点验证、完整标定报告 |
+| `dose_sweep/` | 与 `run` 相同的曲线、指标、元数据与图 |
+| `validation/` | 模型与数字化文献指标的逐点对照 |
+| `sensitivity/`、`robustness/` | OAT 弹性与假设区间扫描 |
+| `figures/`、`docs/figures/p0/` | 结项图 1–5 |
+| `manifest.json` | 软件版本、输入/输出 SHA-256 |
+
 ## 仓库结构
 
 ```text
-configs/             器件、剂量与电路配置
-data/                实测/TCAD 标定数据模板
+configs/             器件、剂量与电路配置（configs/p0 = 结项冻结配置）
+data/                实测/TCAD 标定数据模板、参数注册表、文献数字化结果
 docs/                模型假设、实验矩阵与研发计划
 src/cnt_tid/         可复用 Python 模型和命令行流程
+scripts/             文献图表矢量化数字化脚本
 tcad/                外部 TCAD 求解器接口约定
 tests/               单元测试与端到端回归测试
 .github/workflows/   持续集成

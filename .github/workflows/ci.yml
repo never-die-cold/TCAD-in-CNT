@@ -55,3 +55,5 @@ jobs:
       - run: >-
           cnt-tid matrix --config configs/smoke.toml --output results/ci-matrix
           --oxide-scales 0.8 1.0 --length-scales 0.8 1.0
+      - name: P0 pipeline (digitized literature anchors)
+        run: cnt-tid p0 --output results/ci-p0 --publish-dir results/ci-p0/figures

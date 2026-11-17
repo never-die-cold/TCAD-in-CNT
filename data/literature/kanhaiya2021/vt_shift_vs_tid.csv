@@ -1,0 +1,55 @@
+source,device_id,polarity,geometry,eot_nm,dose_value,dose_unit,metric,value,unit,figure,page,extraction_method,quality
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,0,krad(Si),vt_shift_mv,-0.2108,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,100,krad(Si),vt_shift_mv,351.6,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,200,krad(Si),vt_shift_mv,460.1,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,300,krad(Si),vt_shift_mv,523.6,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,500,krad(Si),vt_shift_mv,572.7,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_top_gate,p,top-gate,7,800,krad(Si),vt_shift_mv,594.9,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,0,krad(Si),vt_shift_mv,-1.945,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,100,krad(Si),vt_shift_mv,30.16,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,200,krad(Si),vt_shift_mv,30.89,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,300,krad(Si),vt_shift_mv,55.42,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,500,krad(Si),vt_shift_mv,69.98,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate,p,local bottom-gate,7,800,krad(Si),vt_shift_mv,84.08,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,0,krad(Si),vt_shift_mv,5.042,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,100,krad(Si),vt_shift_mv,-7.02,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,200,krad(Si),vt_shift_mv,-11.13,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,300,krad(Si),vt_shift_mv,-5.833,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,500,krad(Si),vt_shift_mv,13.08,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate,p,dual-gate,7,800,krad(Si),vt_shift_mv,18.07,mV,Figure 3e,4,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,0,krad(Si),vt_shift_mv,-1.257,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,100,krad(Si),vt_shift_mv,3.437,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,200,krad(Si),vt_shift_mv,13.05,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,500,krad(Si),vt_shift_mv,41.91,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,1000,krad(Si),vt_shift_mv,82.22,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,2000,krad(Si),vt_shift_mv,128.8,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,5000,krad(Si),vt_shift_mv,194,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,8000,krad(Si),vt_shift_mv,340.2,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot7,p,local bottom-gate EOT 7 nm,7,10000,krad(Si),vt_shift_mv,441,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,0,krad(Si),vt_shift_mv,-5.086,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,100,krad(Si),vt_shift_mv,-0.7951,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,200,krad(Si),vt_shift_mv,3.495,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,500,krad(Si),vt_shift_mv,6.176,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,1000,krad(Si),vt_shift_mv,17.4,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,2000,krad(Si),vt_shift_mv,28.94,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,5000,krad(Si),vt_shift_mv,53.63,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,8000,krad(Si),vt_shift_mv,65.55,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_local_bottom_gate_eot2,p,local bottom-gate EOT 2 nm,2,10000,krad(Si),vt_shift_mv,72.47,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,0,krad(Si),vt_shift_mv,-15.1,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,100,krad(Si),vt_shift_mv,-12.7,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,200,krad(Si),vt_shift_mv,-10.31,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,500,krad(Si),vt_shift_mv,-3.122,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,1000,krad(Si),vt_shift_mv,-1.123,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,2000,krad(Si),vt_shift_mv,0.8968,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,5000,krad(Si),vt_shift_mv,65.04,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,8000,krad(Si),vt_shift_mv,163.8,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot7,p,dual-gate EOT 7 nm,7,10000,krad(Si),vt_shift_mv,341.5,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,0,krad(Si),vt_shift_mv,-15.01,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,100,krad(Si),vt_shift_mv,-11.94,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,200,krad(Si),vt_shift_mv,-8.868,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,500,krad(Si),vt_shift_mv,-9.511,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,1000,krad(Si),vt_shift_mv,-1.391,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,2000,krad(Si),vt_shift_mv,-3.005,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,5000,krad(Si),vt_shift_mv,7.044,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,8000,krad(Si),vt_shift_mv,12.08,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review
+Kanhaiya2021,kanhaiya_dual_gate_eot2,p,dual-gate EOT 2 nm,2,10000,krad(Si),vt_shift_mv,41.7,mV,Figure 4,5,pdf_vector_centreline:PyMuPDF-2.1,machine_extracted_pending_review

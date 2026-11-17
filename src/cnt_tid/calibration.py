@@ -307,7 +307,13 @@ def _toml_value(value: object) -> str:
         return "true" if value else "false"
     if isinstance(value, (list, tuple)):
         return "[" + ", ".join(_toml_value(item) for item in value) + "]"
-    return f"{float(value):.10g}" if isinstance(value, float) else str(value)
+    if not isinstance(value, float):
+        return str(value)
+    # 17 significant digits round-trip exactly through TOML, and an explicit
+    # decimal point keeps TOML from parsing the value back as an integer, so
+    # the frozen config reproduces the same config_sha256 as the in-memory one.
+    text = f"{value:.17g}"
+    return text if ("." in text or "e" in text or "n" in text) else text + ".0"
 
 
 def dump_config_toml(config: SimulationConfig) -> str:
