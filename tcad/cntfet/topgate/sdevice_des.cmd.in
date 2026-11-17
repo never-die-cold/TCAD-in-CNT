@@ -1,0 +1,58 @@
+File {
+  Grid = "@tdr@"
+  Parameter = "sdevice.par"
+  Current = "@plot@"
+  Plot = "@tdrdat@"
+  Output = "@log@"
+}
+
+Electrode {
+  { Name = "source" Voltage = @BIAS_SOURCE_V@ }
+  { Name = "drain" Voltage = @BIAS_DRAIN_V@ }
+  { Name = "gate" Voltage = @BIAS_GATE_INITIAL_V@ Workfunction = @MATERIAL_GATE_WORKFUNCTION_EV@ }
+  { Name = "backgate" Voltage = @BIAS_BACKGATE_V@ }
+}
+
+Physics {
+  AreaFactor = @GEOMETRY_GATE_WIDTH_UM@
+  Temperature = @RUN_TEMPERATURE_K@
+  Fermi
+}
+
+Physics (Material = "CNTNetwork") {
+  Mobility(ConstantMobility)
+  Recombination(SRH)
+}
+
+Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
+  Traps(Conc = @RUN_FIXED_CHARGE_CM2@ FixedCharge)
+}
+
+Plot {
+  Potential ElectricField/Vector
+  eCurrent/Vector hCurrent/Vector TotalCurrent/Vector
+  eDensity hDensity SpaceCharge
+  ConductionBand ValenceBand eQuasiFermi hQuasiFermi
+}
+
+Math {
+  Extrapolate
+  RelErrControl
+  Iterations = 30
+  NotDamped = 50
+  Digits = 5
+  ExitOnFailure
+  Wallclock
+}
+
+Solve {
+  Coupled(Iterations = 100 LineSearchDamping = 1e-4) { Poisson }
+  Coupled(Iterations = 100) { Poisson Electron Hole }
+  Quasistationary(
+    InitialStep = 1e-3 Increment = 1.3
+    MinStep = 1e-8 MaxStep = 0.05
+    Goal { Name = "gate" Voltage = @BIAS_GATE_FINAL_V@ }
+  ) {
+    Coupled { Poisson Electron Hole }
+  }
+}

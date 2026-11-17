@@ -1,0 +1,51 @@
+(sde:clear)
+
+(define Lg @GEOMETRY_GATE_LENGTH_UM@)
+(define LeS @GEOMETRY_SOURCE_EXTENSION_UM@)
+(define LeD @GEOMETRY_DRAIN_EXTENSION_UM@)
+(define Tcnt @GEOMETRY_CHANNEL_THICKNESS_UM@)
+(define Ttop @GEOMETRY_TOP_DIELECTRIC_THICKNESS_UM@)
+(define Tbox @GEOMETRY_BURIED_OXIDE_THICKNESS_UM@)
+(define Tsub @GEOMETRY_SUBSTRATE_THICKNESS_UM@)
+(define Ybox Tcnt)
+(define Ysub (+ Ybox Tbox))
+(define Ybottom (+ Ysub Tsub))
+
+(sdegeo:create-rectangle
+  (position (- 0 LeS) 0 0) (position (+ Lg LeD) Tcnt 0)
+  "CNTNetwork" "channel")
+(sdegeo:create-rectangle
+  (position (- 0 LeS) (- 0 Ttop) 0) (position 0 0 0)
+  "TopDielectric" "top_dielectric_source")
+(sdegeo:create-rectangle
+  (position 0 (- 0 Ttop) 0) (position Lg 0 0)
+  "TopDielectric" "top_dielectric_gate")
+(sdegeo:create-rectangle
+  (position Lg (- 0 Ttop) 0) (position (+ Lg LeD) 0 0)
+  "TopDielectric" "top_dielectric_drain")
+(sdegeo:create-rectangle
+  (position (- 0 LeS) Ybox 0) (position (+ Lg LeD) Ysub 0)
+  "Oxide" "buried_oxide")
+(sdegeo:create-rectangle
+  (position (- 0 LeS) Ysub 0) (position (+ Lg LeD) Ybottom 0)
+  "Silicon" "substrate")
+
+(sdegeo:set-contact
+  (list (car (find-face-id (position (- 0 LeS) (/ Tcnt 2) 0)))) "source")
+(sdegeo:set-contact
+  (list (car (find-face-id (position (+ Lg LeD) (/ Tcnt 2) 0)))) "drain")
+(sdegeo:set-contact
+  (list (car (find-face-id (position (/ Lg 2) (- 0 Ttop) 0)))) "gate")
+(sdegeo:set-contact
+  (list (car (find-face-id (position (/ Lg 2) Ybottom 0)))) "backgate")
+
+(sdedr:define-refinement-size "global"
+  @MESH_GLOBAL_MAX_UM@ @MESH_GLOBAL_MAX_UM@ @MESH_GLOBAL_MIN_UM@ @MESH_GLOBAL_MIN_UM@)
+(sdedr:define-refinement-placement "global_sub" "global" (list "material" "Silicon"))
+(sdedr:define-refinement-placement "global_box" "global" (list "material" "Oxide"))
+(sdedr:define-refinement-placement "global_top" "global" (list "material" "TopDielectric"))
+(sdedr:define-refinement-size "channel"
+  @MESH_CHANNEL_MAX_UM@ @MESH_CHANNEL_MAX_UM@ @MESH_CHANNEL_MIN_UM@ @MESH_CHANNEL_MIN_UM@)
+(sdedr:define-refinement-placement "channel" "channel" (list "material" "CNTNetwork"))
+
+(sde:build-mesh "n@node@")

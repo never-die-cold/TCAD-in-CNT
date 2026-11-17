@@ -1,0 +1,7 @@
+source,device_id,polarity,dose_value,dose_unit,vds_signed_v,threshold_signed_v,gm_max_s,ss_mv_dec,source_location,extraction_method,quality
+Cui2023,cnt_network_p,p,0,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization
+Cui2023,cnt_network_p,p,200,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization
+Cui2023,cnt_network_p,p,500,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization
+Cui2023,cnt_network_p,p,1000,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization
+Cui2023,cnt_network_p,p,2000,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization
+Cui2023,cnt_network_p,p,3000,krad(Si),-0.1,,,,Figure 3a-c pages 4-5,,pending_digitization

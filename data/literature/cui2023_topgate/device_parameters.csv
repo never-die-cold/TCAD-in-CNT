@@ -1,0 +1,34 @@
+parameter,value,unit,source_location,usage,status,notes
+polarity,p,,Section 2 page 3,SDevice and metadata,reported,P-type CNT-network FET
+channel_form,CNT network film,,Section 2 page 3,geometry and transport,reported,Not a single-CNT channel
+gate_width,30,um,Section 2 page 3,SDE geometry,reported,Width/length ratio 30/4 um
+gate_length,4,um,Section 2 page 3,SDE geometry,reported,Width/length ratio 30/4 um
+cnt_network_density,15,pieces/um,Section 2 page 3,effective channel interpretation,reported,Definition and diameter distribution require care
+cnt_diameter,,nm,,effective material,not_reported,Do not infer from network density
+cnt_bandgap,,eV,,SDevice material,not_reported,Requires separate source or calibrated assumption
+cnt_electron_affinity,,eV,,SDevice material,not_reported,Requires separate source or calibrated assumption
+cnt_permittivity,,1,,SDevice material,not_reported,Effective network value is not bulk graphite permittivity
+cnt_effective_thickness,,nm,,SDE geometry,not_reported,Effective network film thickness is not the CNT diameter
+cnt_nc300,,cm-3,,SDevice transport,not_reported,Effective 3D DOS is an approximation for a 1D network
+cnt_nv300,,cm-3,,SDevice transport,not_reported,Effective 3D DOS is an approximation for a 1D network
+electron_mobility,,cm2/(V s),,SDevice transport,not_reported,Electron transport is not calibrated by this p-FET paper
+hole_mobility,,cm2/(V s),,SDevice transport,not_reported,Figure 3 GM alone does not uniquely determine mobility
+channel_doping,undoped,,Section 2 page 3,SDevice material,reported_qualitative,Network effective electrostatics still needs assumptions
+contact_metal,Pd,,Section 2 page 3,SDE electrodes,reported,Paper reports Ohmic contacts from IDS-VDS
+contact_resistance,,ohm um,,SDevice contact,not_reported,Do not invent a zero-resistance calibrated value
+top_oxide_stack,Y2O3/HfO2,,Section 2 page 3,SDE geometry,reported,Individual layer order and thicknesses need Figure 1 inspection
+top_oxide_total_thickness,10,nm,Section 2 page 3,SDE geometry,reported,Sum of Y2O3 and HfO2
+y2o3_thickness,,nm,,SDE geometry,not_reported,User must record assumption separately
+hfo2_thickness,,nm,,SDE geometry,not_reported,User must record assumption separately
+y2o3_permittivity,,1,,SDE/SDevice material,not_reported,Use a cited source and record deposition dependence
+hfo2_permittivity,,1,,SDE/SDevice material,not_reported,Use a cited source and record deposition dependence
+top_dielectric_effective_permittivity,,1,,SDevice material,not_reported,Compute a series-equivalent value only after layer values are sourced
+gate_metal,,,Figure 1 page 3,SDE/SDevice contact,unclear,Confirm gate material and workfunction from Figure 1 or another cited source
+gate_workfunction,,eV,,SDevice contact,not_reported,Required for the equivalent gate boundary
+substrate_si_thickness,500,um,Section 2 page 3,SDE geometry,reported,May be truncated for electrostatic simulation only with justification
+buried_sio2_thickness,280,nm,Section 2 page 3,SDE geometry,reported,Back-gate oxide
+initial_qot,,C/cm2,,SDevice traps,not_reported,No quantitative trap density in paper
+initial_qit,,C/cm2,,SDevice traps,not_reported,No quantitative trap density in paper
+dose_rate,195.476,rad(Si)/s,Section 2 page 3,metadata,reported,Not an SDevice electrical input by itself
+irradiation_bias,floating,,Section 2 page 3,metadata and boundary conditions,reported,All device terminals floating during irradiation
+measurement_temperature,room temperature,K,Section 2 page 3,SDevice and metadata,reported_qualitative,Use 300 K only as a documented numerical assumption

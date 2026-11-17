@@ -1,0 +1,45 @@
+name = "cui2023_p_cnt_network_topgate"
+calibration_status = "awaiting_user_digitization_and_assumptions"
+source_data = "data/literature/cui2023_topgate"
+dose_unit = "krad(Si)"
+doses_krad = [0, 200, 500, 1000, 2000, 3000]
+
+[run]
+name = "zero_dose"
+dose_krad = 0.0
+fixed_charge_cm2 = 0.0
+temperature_k = 300.0
+
+[geometry]
+gate_length_um = 4.0
+gate_width_um = 30.0
+top_dielectric_thickness_um = 0.010
+buried_oxide_thickness_um = 0.280
+channel_thickness_um = "REQUIRED: effective CNT network thickness in um"
+source_extension_um = "REQUIRED: source extension beyond gate in um"
+drain_extension_um = "REQUIRED: drain extension beyond gate in um"
+substrate_thickness_um = "REQUIRED: truncated silicon substrate thickness in um"
+
+[material]
+cnt_permittivity = "REQUIRED"
+cnt_bandgap_ev = "REQUIRED"
+cnt_electron_affinity_ev = "REQUIRED"
+cnt_nc300_cm3 = "REQUIRED: effective 3D density of states"
+cnt_nv300_cm3 = "REQUIRED: effective 3D density of states"
+electron_mobility_cm2_vs = "REQUIRED"
+hole_mobility_cm2_vs = "REQUIRED"
+top_dielectric_permittivity = "REQUIRED: series-equivalent Y2O3/HfO2 value"
+gate_workfunction_ev = "REQUIRED"
+
+[bias]
+source_v = 0.0
+drain_v = -0.1
+gate_initial_v = 0.5
+gate_final_v = -2.0
+backgate_v = 0.0
+
+[mesh]
+global_max_um = "REQUIRED"
+global_min_um = "REQUIRED"
+channel_max_um = "REQUIRED"
+channel_min_um = "REQUIRED"

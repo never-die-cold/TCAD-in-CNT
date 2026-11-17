@@ -1,0 +1,12 @@
+Materials {
+  CNTNetwork {
+    label = "Effective CNT network"
+    group = Semiconductor
+    color = #2ca02c
+  }
+  TopDielectric {
+    label = "Equivalent Y2O3/HfO2 stack"
+    group = Insulator
+    color = #9467bd
+  }
+}

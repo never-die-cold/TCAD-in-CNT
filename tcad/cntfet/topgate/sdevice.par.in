@@ -1,0 +1,29 @@
+Material = "CNTNetwork" {
+  Epsilon {
+    epsilon = @MATERIAL_CNT_PERMITTIVITY@
+  }
+  Bandgap {
+    Eg0 = @MATERIAL_CNT_BANDGAP_EV@
+    Chi0 = @MATERIAL_CNT_ELECTRON_AFFINITY_EV@
+    alpha = 0.0
+    beta = 0.0
+    Tpar = @RUN_TEMPERATURE_K@
+  }
+  eDOSMass {
+    Formula = 2
+    Nc300 = @MATERIAL_CNT_NC300_CM3@
+  }
+  hDOSMass {
+    Formula = 2
+    Nv300 = @MATERIAL_CNT_NV300_CM3@
+  }
+  ConstantMobility {
+    mumax = @MATERIAL_ELECTRON_MOBILITY_CM2_VS@, @MATERIAL_HOLE_MOBILITY_CM2_VS@
+  }
+}
+
+Material = "TopDielectric" {
+  Epsilon {
+    epsilon = @MATERIAL_TOP_DIELECTRIC_PERMITTIVITY@
+  }
+}

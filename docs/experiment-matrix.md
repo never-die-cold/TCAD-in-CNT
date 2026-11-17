@@ -31,4 +31,4 @@ cnt-tid matrix --config configs/baseline.toml --output results/matrix \
 
 ## 电路矩阵
 
-首先只研究静态反相器：输入从 0 扫描至 VDD，输出无负载或使用固定小电容仅用于数值稳定。提取 `VM`、`VIL`、`VIH`、`VOL`、`VOH`、`NML`、`NMH`。动态延迟和功耗属于下一阶段，避免在静态模型尚未验证时提前扩展。
+当前电路研究聚焦静态反相器：输入从 0 扫描至 VDD，输出无负载或使用固定小电容仅用于数值稳定。提取 `VM`、`VIL`、`VIH`、`VOL`、`VOH`、`NML`、`NMH`。动态延迟和功耗列入下一阶段。

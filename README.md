@@ -1,8 +1,8 @@
 # TCAD-in-CNT
 
-面向**碳纳米管场效应晶体管（CNTFET）与碳基 CMOS 集成电路总电离剂量（TID）效应**的可复现仿真项目。当前版本打通“器件剂量扫描 → 电学退化 → 反相器静态特性”的最小闭环，并为 Sentaurus 等 TCAD 求解器预留标定与数据接口。
+面向**碳纳米管场效应晶体管（CNTFET）与碳基 CMOS 集成电路总电离剂量（TID）效应**的可复现仿真项目。当前版本打通“器件剂量扫描 → 电学退化 → 反相器静态特性”的最小闭环，并提供已在 Sentaurus W-2024.09 虚拟机中验证的 SDE/SDevice 冒烟接口。
 
-> **状态声明：当前是可运行的等效紧凑模型，不是已完成标定的三维量子 TCAD 模型。** 默认剂量系数仅用于验证流程，不能直接用于器件寿命预测或抗辐射指标声明。
+> **模型范围：当前版本实现“剂量—陷阱电荷—紧凑电学参数—电路响应”的等效链路。** 默认剂量系数用于流程验证，器件寿命与抗辐射指标的定量评估以实验或 TCAD 标定为前提。
 
 ## 当前能力
 
@@ -13,6 +13,7 @@
 - **标定模式**：从 `data/calibration_template.csv` 格式的实测/TCAD 曲线拟合剂量系数，含留一剂量点交叉验证，输出可直接回灌的 TOML 配置；
 - **敏感性分析**：对关键参数做 ±10% 逐个扰动（OAT），输出归一化灵敏度表和龙卷风图；
 - **几何实验矩阵**：联合扫描栅氧厚度与栅长，保留每个场景的完整曲线、配置指纹、警告与失败日志；
+- **TCAD 冒烟接口**：通过 `vmrun` 自动执行已验证的 SDE/SDevice 工程并回传日志；当前验证对象为硅二极管；
 - 一键输出 CSV、元数据 JSON 和 PNG 图，配置采用严格 TOML 校验；
 - 自动测试覆盖阈值漂移方向、电流边界、反相器电平、标定还原、灵敏度符号和完整运行流程。
 
@@ -58,7 +59,7 @@ cnt-tid calibrate --data data/calibration_template.csv \
 cnt-tid run --config results/calibration/fitted_config.toml --output results/calibrated
 ```
 
-注意：标定器把总阈值漂移线性斜率按“亚阈值摆幅退化折算界面陷阱”的启发式拆分为 `Qot`/`Qit`，这是文档化的近似，不是陷阱谱分析结果。
+标定器按“亚阈值摆幅退化折算界面陷阱”的启发式，将总阈值漂移线性斜率拆分为 `Qot`/`Qit`，用于紧凑参数估计；陷阱谱的独立识别需要额外测量数据。
 
 ### 敏感性分析
 
@@ -78,6 +79,18 @@ cnt-tid matrix --config configs/baseline.toml --output results/matrix \
 对两种几何倍率做笛卡尔积，并同步缩放 n/p 器件；每个场景执行完整剂量扫描。默认 3×3 矩阵对应实验计划中的几何 ±20% 扰动。`matrix_summary.csv` 汇总所有成功场景，`matrix_manifest.csv` 记录通过/失败状态；失败场景保留 `failure.txt`，警告写入 `warnings.txt`，不会因单点失败而跳过其余场景。存在失败场景时 CLI 返回非零退出码。
 
 `metadata.json` 和 `matrix_metadata.json` 中的 `config_sha256` 是规范化有效配置的 SHA-256，与 TOML 空格或字段顺序无关，可用于核对结果与配置是否一致。
+
+### Sentaurus 虚拟机冒烟
+
+虚拟机启动且 VMware Tools 正常后，设置 `TCAD_VMRUN`、`TCAD_VMX` 和 `TCAD_GUEST_PASSWORD`，再运行：
+
+```bash
+cnt-tid tcad-smoke --output results/tcad-smoke
+```
+
+该命令执行 `tcad/smoke/` 中的三维硅二极管 SDE/SDevice 工程，检查收敛完成标记并回传日志与电流输出。它只验证 TCAD 工具链，不代表 CNTFET 或 TID 模型已经验证。完整连接说明见 [TCAD 接口](tcad/README.md)。
+
+CNTFET 方向已建立 Cui 2023 顶栅 P 型 CNT 网络器件的数据清单和 SWB 模板，当前处于参数补齐阶段。论文图表数据、缺失参数和用户操作位置见 [数据说明](data/literature/cui2023_topgate/source.md) 与 [CNTFET 用户指南](docs/tcad-user-guide.md)。用户依据文献或明确假设填写 `configs/tcad/cntfet_topgate.toml` 中的 `REQUIRED` 后，即可生成供 SWB 检查的 deck。
 
 ## 输出文件
 
@@ -133,7 +146,7 @@ tests/               单元测试与端到端回归测试
 
 ## 物理边界与优先级
 
-当前等效模型不包含肖特基接触、量子电容、NEGF 输运、直接带间隧穿、陷阱时间动力学及辐照偏置历史。两周内优先完成：
+当前等效模型聚焦氧化层/界面等效陷阱、剂量相关输运和静态电路响应。肖特基接触、量子电容、NEGF 输运、直接带间隧穿、陷阱时间动力学及辐照偏置历史列为后续扩展。两周内优先完成：
 
 1. 选定一种顶栅或 GAA CNTFET 结构，冻结几何和材料参数；
 2. 用辐照前 `Id–Vg` 曲线校准紧凑模型与 TCAD 静电/输运模型；

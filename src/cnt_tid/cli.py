@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -18,6 +19,9 @@ from .calibration import (
 from .config import load_config
 from .matrix import run_matrix
 from .sensitivity import PARAMETERS, run_sensitivity
+from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
+from .tcad_project import render_tcad_project
+from .tcad_vm import VmrunSettings, run_tcad_smoke
 from .workflow import run_simulation
 
 
@@ -73,6 +77,42 @@ def build_parser() -> argparse.ArgumentParser:
         default=(0.8, 1.0, 1.2),
         help="gate length multipliers (default: 0.8 1.0 1.2)",
     )
+
+    tcad_cmd = subparsers.add_parser(
+        "tcad-smoke", help="run the verified SDE/SDevice smoke deck in a VMware guest"
+    )
+    tcad_cmd.add_argument("--vmrun", type=Path, default=os.environ.get("TCAD_VMRUN"))
+    tcad_cmd.add_argument("--vmx", type=Path, default=os.environ.get("TCAD_VMX"))
+    tcad_cmd.add_argument("--output", type=Path, default=Path("results/tcad-smoke"))
+    tcad_cmd.add_argument("--deck-dir", type=Path, default=Path("tcad/smoke"))
+    tcad_cmd.add_argument(
+        "--guest-user", default=os.environ.get("TCAD_GUEST_USER", "tcad")
+    )
+    tcad_cmd.add_argument(
+        "--guest-workdir",
+        default=os.environ.get("TCAD_GUEST_WORKDIR", "/home/tcad/STDB/cnt_tid_smoke"),
+    )
+
+    prepare_cmd = subparsers.add_parser(
+        "tcad-prepare", help="render CNTFET decks after all required values are supplied"
+    )
+    prepare_cmd.add_argument("--config", type=Path, required=True)
+    prepare_cmd.add_argument("--template-dir", type=Path, default=Path("tcad/cntfet/topgate"))
+    prepare_cmd.add_argument("--output", type=Path, default=Path("results/tcad/prepared"))
+
+    literature_cmd = subparsers.add_parser(
+        "tcad-prepare-data", help="convert verified signed literature curves to magnitudes"
+    )
+    literature_cmd.add_argument("--input", type=Path, required=True)
+    literature_cmd.add_argument("--output", type=Path, required=True)
+
+    export_cmd = subparsers.add_parser(
+        "tcad-export", help="convert a text SDevice .plt Id-Vg file to signed CSV"
+    )
+    export_cmd.add_argument("--plt", type=Path, required=True)
+    export_cmd.add_argument("--output", type=Path, required=True)
+    export_cmd.add_argument("--gate-contact", default="gate")
+    export_cmd.add_argument("--drain-contact", default="drain")
     return parser
 
 
@@ -157,6 +197,49 @@ def _cmd_matrix(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_tcad_smoke(args: argparse.Namespace) -> int:
+    if not args.vmrun or not args.vmx:
+        raise ValueError("--vmrun and --vmx are required (or set TCAD_VMRUN and TCAD_VMX)")
+    password = os.environ.get("TCAD_GUEST_PASSWORD")
+    if not password:
+        raise ValueError("Set TCAD_GUEST_PASSWORD in the environment; do not put it in TOML")
+    settings = VmrunSettings(
+        vmrun=args.vmrun,
+        vmx=args.vmx,
+        guest_password=password,
+        guest_user=args.guest_user,
+        guest_workdir=args.guest_workdir,
+    )
+    result = run_tcad_smoke(settings, args.output, args.deck_dir)
+    print(f"TCAD smoke passed: {result.output_dir}")
+    print("Retrieved SDE/SDevice logs and smoke_des.plt; native TDR files remain in the guest")
+    return 0
+
+
+def _cmd_tcad_prepare(args: argparse.Namespace) -> int:
+    result = render_tcad_project(args.config, args.output, args.template_dir)
+    print(f"TCAD project prepared (not run): {result.output_dir}")
+    print("Review the generated decks, then run SDE and SDevice from SWB")
+    return 0
+
+
+def _cmd_tcad_prepare_data(args: argparse.Namespace) -> int:
+    result = prepare_literature_idvg(args.input, args.output)
+    print(f"Literature data written: {result.output_path.resolve()}")
+    print(f"Rows retained: {result.output_rows}/{result.input_rows}")
+    print(f"Positive-VGS rows excluded from compact calibration: {result.dropped_positive_vgs_rows}")
+    return 0
+
+
+def _cmd_tcad_export(args: argparse.Namespace) -> int:
+    csv_path, metadata_path = export_sdevice_idvg(
+        args.plt, args.output, args.gate_contact, args.drain_contact
+    )
+    print(f"SDevice CSV written: {csv_path}")
+    print(f"Source checksum written: {metadata_path}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
@@ -167,6 +250,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_sensitivity(args)
     if args.command == "matrix":
         return _cmd_matrix(args)
+    if args.command == "tcad-smoke":
+        return _cmd_tcad_smoke(args)
+    if args.command == "tcad-prepare":
+        return _cmd_tcad_prepare(args)
+    if args.command == "tcad-prepare-data":
+        return _cmd_tcad_prepare_data(args)
+    if args.command == "tcad-export":
+        return _cmd_tcad_export(args)
     return 2
 
 
