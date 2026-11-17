@@ -1,0 +1,15 @@
+# Fast smoke-test configuration for CI and quick local checks.
+name = "smoke"
+vdd_v = 0.8
+temperature_k = 300.0
+dose_unit = "krad(SiO2)"
+doses_krad = [0, 100]
+transfer_points = 60
+inverter_points = 201
+calibration_status = "illustrative_uncalibrated"
+
+[n_device]
+polarity = "n"
+
+[p_device]
+polarity = "p"

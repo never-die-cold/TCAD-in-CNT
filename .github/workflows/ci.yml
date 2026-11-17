@@ -21,3 +21,34 @@ jobs:
       - run: ruff check src tests
       - run: pytest --cov=cnt_tid --cov-report=term-missing
       - run: cnt-tid run --config configs/baseline.toml --output results/ci
+      - name: Smoke calibrate on synthetic data
+        run: |
+          python - <<'EOF'
+          import numpy as np
+          import pandas as pd
+          from cnt_tid.config import DeviceConfig
+          from cnt_tid.device import drain_current, state_at_dose
+
+          rng = np.random.default_rng(7)
+          vgs = np.linspace(0.0, 0.8, 41)
+          rows = []
+          for polarity in ("n", "p"):
+              device = DeviceConfig(polarity=polarity)
+              for dose in (0.0, 100.0, 300.0, 1000.0):
+                  current = drain_current(state_at_dose(device, dose), vgs, 0.8)
+                  current = current * (1.0 + 0.02 * rng.standard_normal(vgs.size))
+                  for vg, value in zip(vgs, current):
+                      rows.append({
+                          "source": "ci_synthetic", "device_id": polarity,
+                          "polarity": polarity, "dose_value": dose,
+                          "dose_unit": "krad(SiO2)", "bias_condition": "on",
+                          "temperature_k": 300.0, "vgs_v": vg, "vds_v": 0.8,
+                          "id_a": value,
+                      })
+          pd.DataFrame(rows).to_csv("results/ci_calibration.csv", index=False)
+          EOF
+          cnt-tid calibrate --data results/ci_calibration.csv \
+              --config configs/baseline.toml --output results/ci-calibration
+      - run: >-
+          cnt-tid sensitivity --config configs/smoke.toml
+          --output results/ci-sensitivity --params n.qot_slope p.threshold_v

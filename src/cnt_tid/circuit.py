@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
@@ -90,6 +91,12 @@ def solve_inverter(
     vil = _crossing(vin, gain_error, 0.0)
     vih = _last_crossing(vin, gain_error, 0.0)
     vm = _crossing(vin, vout - vin, 0.0)
+    if np.isnan(vil) or np.isnan(vih) or np.isnan(vm):
+        warnings.warn(
+            "inverter crossing extraction failed (VIL/VIH/VM is NaN); "
+            "check device balance, vdd_v and grid resolution",
+            stacklevel=2,
+        )
     vol = float(vout[-1])  # Output low when the input is high.
     voh = float(vout[0])  # Output high when the input is low.
     return InverterResult(

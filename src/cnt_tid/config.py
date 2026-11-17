@@ -46,6 +46,14 @@ class DeviceConfig:
             raise ValueError("channel_length_modulation must be non-negative")
         if self.mobility_degradation_per_krad < 0:
             raise ValueError("mobility_degradation_per_krad must be non-negative")
+        non_negative_slopes = {
+            "qot_slope_c_cm2_per_krad": self.qot_slope_c_cm2_per_krad,
+            "qit_slope_c_cm2_per_krad": self.qit_slope_c_cm2_per_krad,
+            "slope_factor_per_krad": self.slope_factor_per_krad,
+        }
+        for name, value in non_negative_slopes.items():
+            if value < 0:
+                raise ValueError(f"{name} must be non-negative")
 
     @property
     def width_m(self) -> float:

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from cnt_tid.circuit import solve_inverter
 from cnt_tid.config import DeviceConfig
@@ -34,3 +35,17 @@ def test_dose_moves_switching_threshold_for_asymmetric_defaults() -> None:
     assert irradiated.vm_v < fresh.vm_v
     assert irradiated.nml_v > 0
     assert irradiated.nmh_v > 0
+
+
+def test_failed_crossing_extraction_warns_instead_of_silently_zeroing() -> None:
+    # Deep-subthreshold-only devices keep |gain| < 1 across the whole VTC,
+    # so VIL/VIH crossings do not exist and must surface as NaN + warning.
+    n_state = state_at_dose(
+        DeviceConfig(polarity="n", threshold_v=0.5, slope_factor=5.0), 0.0
+    )
+    p_state = state_at_dose(
+        DeviceConfig(polarity="p", threshold_v=0.5, slope_factor=5.0), 0.0
+    )
+    with pytest.warns(UserWarning, match="crossing extraction failed"):
+        result = solve_inverter(n_state, p_state, vdd_v=0.1, points=501)
+    assert np.isnan(result.vil_v) and np.isnan(result.vih_v)

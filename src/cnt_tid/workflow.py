@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from . import __version__
 from .circuit import solve_inverter
 from .config import SimulationConfig
 from .device import drain_current, state_at_dose
@@ -99,6 +100,7 @@ def run_simulation(config: SimulationConfig, output_dir: str | Path) -> Simulati
 
     metadata = {
         "schema_version": "1.0",
+        "software_version": __version__,
         "model_type": "compact_equivalent_tid",
         "calibration_status": config.calibration_status,
         "created_utc": datetime.now(UTC).isoformat(),
