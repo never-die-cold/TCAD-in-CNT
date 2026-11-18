@@ -1,5 +1,5 @@
 name = "cui2023_p_cnt_network_topgate"
-calibration_status = "prepared_zero_dose_alignment_pending"
+calibration_status = "tcad_zero_dose_aligned_compact_metrics"
 source_data = "data/literature/cui2023_topgate"
 dose_unit = "krad(Si)"
 doses_krad = [0, 200, 500, 1000, 2000, 3000]
@@ -16,8 +16,13 @@ fixed_charge_cm2 = 0.0
 # Pre-existing interface states, derived from the digitized zero-dose swing:
 # SS0 = 207.95 mV/dec -> n0 = SS0/59.6 = 3.49 -> q*Dit/Cox = n0 - 1
 # -> Dit = 2.49 * 1.33e-6 F/cm2 / 1.6e-19 C = 2.1e13 cm-2 eV-1.
-# Range 1e13 - 3e13; verify the Traps level syntax against the W-2024.09 manual.
+# Range 1e13 - 3e13; Traps syntax checked against the W-2024.09 manual.
 interface_dit_cm2ev = 2.1e13
+# Amphoteric uniform distributions relative to midgap for Eg = 0.5 eV:
+# donor -0.25..0 eV and acceptor 0..0.25 eV.
+interface_donor_energy_mid_ev = -0.125
+interface_acceptor_energy_mid_ev = 0.125
+interface_trap_energy_width_ev = 0.25
 temperature_k = 300.0
 
 [geometry]
@@ -55,12 +60,21 @@ cnt_nv300_cm3 = 5e18
 # Electron mobility is unmeasured; symmetric-complement assumption, ratio 0.5-2.
 electron_mobility_cm2_vs = 21.4
 hole_mobility_cm2_vs = 21.4
+# Constant SRH lifetimes; W-2024.09 SDevice User Guide Table 87 defaults.
+electron_srh_lifetime_s = 1e-5
+hole_srh_lifetime_s = 3e-6
 # Same series-equivalent Y2O3/HfO2 value as the P0 registry assumption.
 top_dielectric_permittivity = 15.0
-# Midgap potential of the film is chi + Eg/2 = 4.75 eV; |Vth| = 0.53 V needs
-# the gate ~0.2-0.25 V below it.  Paper gate metal is unconfirmed (Figure 1);
-# this is the primary |Vth| alignment knob.  Range 4.1-5.2.
-gate_workfunction_ev = 4.5
+# Midgap potential of the film is chi + Eg/2 = 4.75 eV. Higher gate
+# workfunction reduces |Vth| for this p-FET. Paper gate metal is unconfirmed;
+# this is the primary |Vth| alignment knob. Range 4.1-5.2.
+gate_workfunction_ev = 4.95
+# Pd source/drain workfunction; paper reports Pd Ohmic contacts, not its value.
+# High workfunction gives hole injection into the effective CNT film. Range 4.8-5.4.
+source_drain_workfunction_ev = 5.1
+# Effective acceptor doping in the Pd-contacted, ungated extensions only.
+# The gated channel remains undoped. Alignment range 1e18-1e21 cm-3.
+source_drain_doping_cm3 = 3e19
 
 [bias]
 source_v = 0.0

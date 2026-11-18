@@ -56,7 +56,7 @@
 
 图 3a–c 已由 `scripts/digitize_cui2023_fig3.py` 从 PDF 矢量内容自动提取，结果见 `fig3_metrics_digitized.csv`（18 行 = 6 剂量 × 3 指标，含误差棒），坐标轴标定系数与 PDF 哈希见 `fig3_digitization_report.json`，人工核对图见 `results/literature/fig3_overlay.png`。该 CSV 的 `quality` 字段为 `machine_extracted_pending_review`：数值可复算，但仍建议人工对照原图确认一次。
 
-图 2 的 Id–Vg 仍为位图，未数字化，因此标定使用图 3 的三个指标而非全曲线（见 `docs/p0-report.md` 第 9 节）。
+图 2 的 Id–Vg 仍为位图，未数字化，因此标定使用图 3 的三个指标而非全曲线（见 `docs/p0-report.md` 第 11 节）。
 
 ## 用户确认门槛
 

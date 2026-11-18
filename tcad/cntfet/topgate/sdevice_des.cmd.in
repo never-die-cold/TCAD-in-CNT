@@ -7,8 +7,8 @@ File {
 }
 
 Electrode {
-  { Name = "source" Voltage = @BIAS_SOURCE_V@ }
-  { Name = "drain" Voltage = @BIAS_DRAIN_V@ }
+  { Name = "source" Voltage = @BIAS_SOURCE_V@ Schottky Workfunction = @MATERIAL_SOURCE_DRAIN_WORKFUNCTION_EV@ }
+  { Name = "drain" Voltage = @BIAS_DRAIN_V@ Schottky Workfunction = @MATERIAL_SOURCE_DRAIN_WORKFUNCTION_EV@ }
   { Name = "gate" Voltage = @BIAS_GATE_INITIAL_V@ Workfunction = @MATERIAL_GATE_WORKFUNCTION_EV@ }
   { Name = "backgate" Voltage = @BIAS_BACKGATE_V@ }
 }
@@ -21,20 +21,19 @@ Physics {
 
 Physics (Material = "CNTNetwork") {
   Mobility(ConstantMobility)
+  EffectiveIntrinsicDensity(NoBandGapNarrowing)
   Recombination(SRH)
 }
 
 Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
-  # FixedCharge carries the TID oxide charge (zero at zero dose).  The donor
-  # and acceptor levels are the PRE-EXISTING interface states: their
-  # concentration is derived from the digitized zero-dose swing (SS0 =
-  # 207.95 mV/dec -> q*Dit/Cox = n0 - 1 -> Dit = 2.1e13 cm-2 eV-1) and is the
-  # zero-dose SS alignment knob.  Verify the level syntax against the
-  # W-2024.09 SDevice manual before the first run.
+  # FixedCharge carries the TID oxide charge (zero at zero dose). Amphoteric
+  # pre-existing interface states use uniform densities in cm-2 eV-1: donors
+  # occupy the lower half-gap and acceptors the upper half-gap. Multiple trap
+  # specifications require inner parentheses (W-2024.09 User Guide, Ch. 17).
   Traps(
-    Conc = @RUN_FIXED_CHARGE_CM2@ FixedCharge
-    (Donor Level1 EnergyMid = 0.0 Conc = @RUN_INTERFACE_DIT_CM2EV@ eXSection = 1e-14 hXSection = 1e-14)
-    (Acceptor Level2 EnergyMid = 0.0 Conc = @RUN_INTERFACE_DIT_CM2EV@ eXSection = 1e-14 hXSection = 1e-14)
+    (Conc = @RUN_FIXED_CHARGE_CM2@ FixedCharge)
+    (Donor Uniform EnergyMid = @RUN_INTERFACE_DONOR_ENERGY_MID_EV@ EnergySig = @RUN_INTERFACE_TRAP_ENERGY_WIDTH_EV@ Conc = @RUN_INTERFACE_DIT_CM2EV@ fromMidBandGap eXSection = 1e-14 hXSection = 1e-14)
+    (Acceptor Uniform EnergyMid = @RUN_INTERFACE_ACCEPTOR_ENERGY_MID_EV@ EnergySig = @RUN_INTERFACE_TRAP_ENERGY_WIDTH_EV@ Conc = @RUN_INTERFACE_DIT_CM2EV@ fromMidBandGap eXSection = 1e-14 hXSection = 1e-14)
   )
 }
 

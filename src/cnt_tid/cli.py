@@ -33,6 +33,7 @@ from .structure_transfer import write_prediction_artifacts
 from .tcad_alignment import align_zero_dose
 from .tcad_io import export_sdevice_idvg, prepare_literature_idvg
 from .tcad_project import render_tcad_project
+from .tcad_reproduce import run_tcad_reproduction
 from .tcad_vm import VmrunSettings, run_tcad_smoke
 from .workflow import run_simulation
 
@@ -229,6 +230,28 @@ def build_parser() -> argparse.ArgumentParser:
     align_cmd.add_argument("--i-ref-a", type=float, default=1e-6)
     align_cmd.add_argument("--gate-rel", type=float, default=0.20)
     align_cmd.add_argument("--output", type=Path, default=Path("results/tcad/zero_dose"))
+
+    reproduce_cmd = subparsers.add_parser(
+        "tcad-reproduce",
+        help="rebuild zero-dose, mesh, fixed-charge and final TCAD matrices with a manifest",
+    )
+    reproduce_cmd.add_argument("--vmrun", type=Path, default=os.environ.get("TCAD_VMRUN"))
+    reproduce_cmd.add_argument("--vmx", type=Path, default=os.environ.get("TCAD_VMX"))
+    reproduce_cmd.add_argument("--output", type=Path, default=Path("results/tcad/reproduced"))
+    reproduce_cmd.add_argument("--reference", type=Path, default=Path("results/tcad"))
+    reproduce_cmd.add_argument("--base-config", type=Path, default=Path("configs/tcad/cntfet_topgate.toml"))
+    reproduce_cmd.add_argument("--compact-config", type=Path, default=Path("configs/p0/cntfet_tid_p0.toml"))
+    reproduce_cmd.add_argument(
+        "--literature",
+        type=Path,
+        default=Path("data/literature/cui2023_topgate/fig3_metrics_digitized.csv"),
+    )
+    reproduce_cmd.add_argument("--template-dir", type=Path, default=Path("tcad/cntfet/topgate"))
+    reproduce_cmd.add_argument("--guest-user", default=os.environ.get("TCAD_GUEST_USER", "tcad"))
+    reproduce_cmd.add_argument(
+        "--guest-workdir",
+        default=os.environ.get("TCAD_GUEST_WORKDIR", "/home/tcad/STDB/cnt_tid_reproduce"),
+    )
     return parser
 
 
@@ -524,6 +547,40 @@ def _cmd_tcad_align(args: argparse.Namespace) -> int:
     return 0 if result.passed else 1
 
 
+def _cmd_tcad_reproduce(args: argparse.Namespace) -> int:
+    if not args.vmrun or not args.vmx:
+        raise ValueError("--vmrun and --vmx are required (or set TCAD_VMRUN and TCAD_VMX)")
+    password = os.environ.get("TCAD_GUEST_PASSWORD")
+    if not password:
+        raise ValueError("Set TCAD_GUEST_PASSWORD in the environment; do not put it in TOML")
+    settings = VmrunSettings(
+        vmrun=args.vmrun,
+        vmx=args.vmx,
+        guest_password=password,
+        guest_user=args.guest_user,
+        guest_workdir=args.guest_workdir,
+    )
+    result = run_tcad_reproduction(
+        settings,
+        args.output,
+        base_config=args.base_config,
+        compact_config=args.compact_config,
+        literature=args.literature,
+        template_dir=args.template_dir,
+        reference=args.reference,
+    )
+    print(f"TCAD reproduction complete: {result.output_dir}")
+    print(f"Manifest: {result.manifest_path}")
+    print(f"Hash verification: {result.verification_path}")
+    for name, comparison in result.reference_comparisons.items():
+        if comparison["reference_available"]:
+            print(
+                f"  {name}: sha256_match={comparison['sha256_match']}, "
+                f"numeric_match={comparison['numeric_match_rtol_1e-10']}"
+            )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
@@ -556,6 +613,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_tcad_export(args)
     if args.command == "tcad-align":
         return _cmd_tcad_align(args)
+    if args.command == "tcad-reproduce":
+        return _cmd_tcad_reproduce(args)
     return 2
 
 

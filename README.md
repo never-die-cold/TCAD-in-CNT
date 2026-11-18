@@ -4,7 +4,7 @@
 
 > **模型范围：**"剂量—陷阱电荷—紧凑电学参数—电路响应"为经文献图表标定的等效紧凑模型（`calibrated_compact_fit_metrics`），不是器件预测；退火与剂量率为显式假设情景。器件寿命与抗辐射指标的定量评估以实验或 TCAD 标定为前提。
 
-## P0 结项成果（v0.11.0）
+## P0 结项成果（v0.13.0）
 
 ```bash
 cnt-tid p0        # 主线：标定 → 扫描 → 验证 → 图 1–3、11 + manifest
@@ -35,8 +35,8 @@ cnt-tid all       # 一键全量重建：p0 → 蒙特卡洛 → 迁移预测 �
 - **全链条蒙特卡洛**（`cnt-tid mc`）：registry 假设三角采样 + 数字化误差棒正态采样 → 关键数字的置信区间，失败抽样如实计数；
 - **结构迁移预测器**（`cnt-tid predict`）：每变体 |ΔVt|(D) 预测 + 架构类别包络带 + 外推标记；
 - 标定模式（曲线级 + 指标级两条路径，含留一交叉验证）、敏感性分析、几何实验矩阵；
-- **TCAD 集成**：冒烟链路、CNTFET deck 生成（`tcad-prepare`，REQUIRED 已按溯源补齐）、零剂量对齐门禁（`tcad-align`，<20 %）；
-- 一键输出 CSV/JSON/PNG，配置严格 TOML 校验；95 项自动测试 + ruff 全绿。
+- **TCAD 集成**：冒烟链路、CNTFET deck 生成（`tcad-prepare`）、零剂量对齐（`tcad-align`，三项指标均 <20 %）与三档网格验证；
+- 一键输出 CSV/JSON/PNG，配置严格 TOML 校验；100 项自动测试 + ruff 全绿。
 
 ## 快速开始
 
@@ -111,7 +111,7 @@ cnt-tid tcad-smoke --output results/tcad-smoke
 
 该命令执行 `tcad/smoke/` 中的三维硅二极管 SDE/SDevice 工程，检查收敛完成标记并回传日志与电流输出。它只验证 TCAD 工具链，不代表 CNTFET 或 TID 模型已经验证。完整连接说明见 [TCAD 接口](tcad/README.md)。
 
-CNTFET 方向已建立 Cui 2023 顶栅 P 型 CNT 网络器件的数据清单和 SWB 模板，当前处于参数补齐阶段。论文图表数据、缺失参数和用户操作位置见 [数据说明](data/literature/cui2023_topgate/source.md) 与 [CNTFET 用户指南](docs/tcad-user-guide.md)。用户依据文献或明确假设填写 `configs/tcad/cntfet_topgate.toml` 中的 `REQUIRED` 后，即可生成供 SWB 检查的 deck。
+CNTFET 方向已完成 Cui 2023 顶栅 P 型 CNT 网络器件的 SDE/SDevice 零剂量首跑与三档网格检查。基准网格上 SS、Gm、恒流阈值相对紧凑模型的偏差分别为 5.5%、2.6%、12.5%，均通过 <20 % 门禁。0–3000 krad(Si) 六剂量点矩阵已完成；最终固定电荷 + 剂量相关界面态模型保持迁移率恒定，阈值、Gm、SS 相对文献最大偏差为 16.9%、13.3%、13.1%。参数溯源见 [数据说明](data/literature/cui2023_topgate/source.md)，结果位置与后续 TID 操作见 [CNTFET 用户指南](docs/tcad-user-guide.md)。
 
 ## 输出文件
 
@@ -175,6 +175,7 @@ cnt-tid predict     # 结构迁移预测：8 变体 |ΔVt|(D) + 架构类别包�
 cnt-tid anneal      # 辐照后退火情景：VM/摆幅/频率恢复曲线（图 10）
 cnt-tid all         # 一键全量重建 + 总清单 deliverable_manifest.json
 cnt-tid tcad-align  # TCAD 零剂量曲线 vs 紧凑模型 <20 % 门禁
+cnt-tid tcad-reproduce  # 零剂量 + 网格 + 六剂量点双模型 + SHA-256 manifest
 ```
 
 每个命令把假设与溯源写进产物元数据；`mc` 与 `anneal` 的数字是显式假设情景，引用时必须连同假设值一起引用。

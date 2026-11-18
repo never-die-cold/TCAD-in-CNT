@@ -16,6 +16,8 @@ hole_mobility,,cm2/(V s),,SDevice transport,not_reported,Figure 3 GM alone does 
 channel_doping,undoped,,Section 2 page 3,SDevice material,reported_qualitative,Network effective electrostatics still needs assumptions
 contact_metal,Pd,,Section 2 page 3,SDE electrodes,reported,Paper reports Ohmic contacts from IDS-VDS
 contact_resistance,,ohm um,,SDevice contact,not_reported,Do not invent a zero-resistance calibrated value
+source_drain_workfunction,5.1,eV,assumed for reported Pd contacts,SDevice contact,assumed,Paper reports Pd Ohmic contacts but no workfunction; high-workfunction hole-injection boundary; range 4.8-5.4 eV
+source_drain_doping,3e19,cm-3,assumed effective Pd-contact doping,SDE source/drain extensions,calibrated,Effective acceptor doping confined to ungated Pd-contacted extensions; gated channel remains undoped; adjusted for zero-dose Gm; range 1e18-1e21 cm-3
 top_oxide_stack,Y2O3/HfO2,,Section 2 page 3,SDE geometry,reported,Individual layer order and thicknesses need Figure 1 inspection
 top_oxide_total_thickness,10,nm,Section 2 page 3,SDE geometry,reported,Sum of Y2O3 and HfO2
 y2o3_thickness,,nm,,SDE geometry,not_reported,User must record assumption separately
@@ -43,9 +45,14 @@ cnt_nc300,5e18,cm-3,derived from 1D tube DOS,SDevice transport,assumed,g/(2 pi h
 cnt_nv300,5e18,cm-3,derived from 1D tube DOS,SDevice transport,assumed,Same estimate as nc300; range 1e18-2e19
 hole_mobility,21.4,cm2/(V s),cnt-tid p0 calibration (model-inverted zero dose),SDevice transport,calibrated,Scales with the Cox assumption (eps_r 12-20)
 electron_mobility,21.4,cm2/(V s),assumed symmetric complement,SDevice transport,assumed,Unmeasured; same ratio assumption as the P0 n-device; range 0.5-2 x hole mobility
+electron_srh_lifetime,1e-5,s,W-2024.09 SDevice User Guide Table 87,SDevice transport,convention,Manual default; constant lifetime because SRH doping dependence is disabled
+hole_srh_lifetime,3e-6,s,W-2024.09 SDevice User Guide Table 87,SDevice transport,convention,Manual default; constant lifetime because SRH doping dependence is disabled
 top_dielectric_effective_permittivity,15,1,assumed (P0 registry series equivalent),SDevice material,assumed,Same series-equivalent Y2O3/HfO2 value as the P0 registry; range 12-20
-gate_workfunction,4.5,eV,assumed,SDevice contact,assumed,Midgap potential of the film is chi + Eg/2 = 4.75 eV; |Vth| = 0.53 V needs the gate ~0.2-0.25 V below it; primary |Vth| alignment knob; range 4.1-5.2 eV; paper gate metal unconfirmed (Figure 1)
-interface_state_density,2.1e13,cm-2 eV-1,derived from digitized SS0,SDevice traps,derived,SS0 = 207.95 mV/dec -> q*Dit/Cox = n0-1 -> Dit = 2.49*Cox/q; zero-dose SS alignment knob; range 1e13-3e13; verify Traps level syntax against the W-2024.09 manual
+gate_workfunction,4.95,eV,assumed,SDevice contact,calibrated,Primary |Vth| alignment knob; higher workfunction reduces |Vth| for this p-FET; range 4.1-5.2 eV; paper gate metal unconfirmed (Figure 1)
+interface_state_density,2.1e13,cm-2 eV-1,derived from digitized SS0,SDevice traps,calibrated,SS0 = 207.95 mV/dec -> q*Dit/Cox = n0-1 -> Dit = 2.49*Cox/q; zero-dose SS alignment knob; range 1e13-3e13; uniform amphoteric distributions checked against W-2024.09 manual
+interface_donor_energy_mid,-0.125,eV,derived from Eg=0.5 eV,SDevice traps,derived,Lower half-gap uniform donor distribution centered at -Eg/4 relative to midgap
+interface_acceptor_energy_mid,0.125,eV,derived from Eg=0.5 eV,SDevice traps,derived,Upper half-gap uniform acceptor distribution centered at +Eg/4 relative to midgap
+interface_trap_energy_width,0.25,eV,derived from Eg=0.5 eV,SDevice traps,derived,Each amphoteric distribution spans Eg/2; update all three energy values if bandgap changes
 mesh_global_max,0.5,um,convention,SDE refinement,convention,Coarse background mesh
 mesh_global_min,0.02,um,convention,SDE refinement,convention,Oxide and substrate resolution
 mesh_channel_max,0.05,um,convention,SDE refinement,convention,Channel resolution along the film

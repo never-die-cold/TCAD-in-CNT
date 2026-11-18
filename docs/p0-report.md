@@ -1,6 +1,6 @@
 # P0 结项报告：文献锚定的 CNTFET 总剂量效应紧凑模型
 
-**版本** v0.6.0 · **结项日期** 2026-11-17 · **剂量单位** krad(Si)
+**版本** v0.13.0 · **结项日期** 2026-11-18 · **剂量单位** krad(Si)
 
 ---
 
@@ -49,6 +49,7 @@ P0 的五项要求已经形成一个闭环，且每一环都能被独立复算�
 | 标定与敏感性分析 | 残差、留一验证、OAT 龙卷风、假设区间 | `results/p0/calibration/`、`results/p0/sensitivity/`、`results/p0/robustness/`、图 2/4/5 |
 | 可复现代码与结项图表 | 单一命令重建 + SHA-256 清单 + 测试 | `cnt-tid p0`、`results/p0/manifest.json`、`docs/figures/p0/` |
 | 参数的适用范围（附加） | 跨 2 篇文献、7 个器件变体的剂量律对比与迁移误差 | `results/p0/cross_source/`、图 6、第 7 节 |
+| TCAD 一致性验证（v0.13.0） | 零剂量、三档网格、六剂量点双模型、原生日志与 SHA-256 清单 | `cnt-tid tcad-reproduce`、`results/tcad/reproduced/`、第 9 节 |
 
 ---
 
@@ -322,7 +323,111 @@ OAT 弹性系数回答"谁重要"，假设区间扫描回答"两端差多少"，
 
 ---
 
-## 9. 复现
+## 9. TCAD：文献标定后的一致性验证
+
+本章给出 Cui 2023 顶栅 p 型 CNT 网络器件的二维 SDE/SDevice 结果。**这些结果属于“文献标定后的一致性验证”，不是“独立预测验证”。** 零剂量参数先由文献指标和紧凑模型对齐，剂量输入再由同一文献标定的剂量律转换得到；六点三指标对照用于检查模型链路是否自洽。论文图 2 的完整 Id–Vg 曲线尚未用于形状验证。
+
+### 9.1 结构、有效材料与边界条件
+
+几何和材料输入来自 `configs/tcad/cntfet_topgate.toml`，模板为 `tcad/cntfet/topgate/`；每个剂量点的实际配置和 runtime deck 由 `cnt-tid tcad-reproduce` 写入各自结果目录。
+
+| 项目 | 冻结值与处理 | 类型 |
+| --- | --- | --- |
+| 器件结构 | 二维顶栅 CNT 网络 p-FET；栅长 4 µm、宽度 30 µm，`AreaFactor=30` | 文献几何 + 二维等效 |
+| 源漏延伸 | 左右各 2 µm，独立 `source_extension`/`drain_extension` 区域 | 假设 |
+| CNT 有效膜 | 厚 5 nm、εr=80、Eg=0.5 eV、χ=4.5 eV、Nc=Nv=5e18 cm⁻³ | 有效材料假设 |
+| 顶栅介质 | Y₂O₃/HfO₂ 串联等效，厚 10 nm、εr=15 | 文献厚度 + 等效介电假设 |
+| 埋氧与衬底 | 280 nm SiO₂；500 µm Si 截断为 2 µm，底面设背栅 | 文献 + 数值截断 |
+| 栅接触 | 功函数 4.95 eV | 零剂量阈值标定 |
+| Pd 源漏 | `Schottky Workfunction=5.1 eV`；延伸区受主掺杂 3e19 cm⁻³ | 欧姆接触的有效边界标定 |
+| 沟道掺杂 | 栅控沟道保持未掺杂 | 文献定性信息 |
+| 输运 | 电子/空穴迁移率均 21.4 cm²/Vs，最终剂量矩阵保持恒定；Fermi 统计 | 零剂量标定/互补假设 |
+| 复合 | 恒定 SRH 寿命，电子 1e-5 s、空穴 3e-6 s；关闭带隙变窄 | W-2024.09 手册默认数值假设 |
+| 预存界面态 | Dit0=2.1e13 cm⁻²eV⁻¹；Donor 位于下半带隙、Acceptor 位于上半带隙，均为 Uniform | 零剂量 SS 反推 |
+| 电学边界 | source=0 V、drain=−0.1 V、backgate=0 V；gate 从 0.5 V 扫至 −2.0 V | 论文测量偏置 |
+| 温度 | 300 K | “室温”的数值约定 |
+
+SDevice 使用 Poisson–Electron–Hole 耦合求解。最终模型由总有效固定电荷和剂量相关界面态组成，迁移率保持恒定。直接叠加紧凑模型的迁移率退化会重复计算阈值位移造成的 Gm 下降，因此未纳入最终 TCAD 模型。
+
+### 9.2 网格收敛
+
+粗/基准/细网格分别将全局与沟道网格尺寸按 2/1/0.5 倍缩放，电学和材料输入不变。三档零剂量结果均通过 `tcad-align` 的 20% 指标门禁。
+
+| 网格 | 网格点 | 单元数 | SS (mV/dec) | Gm max (µS) | \|Vth\| (V) | 判定 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 粗 | 689 | 1222 | 213.150 | 11.024 | 0.60624 | pass |
+| 基准 | 1405 | 2510 | 213.119 | 10.964 | 0.60684 | pass |
+| 细 | 3029 | 5470 | 213.099 | 10.931 | 0.60734 | pass |
+
+相对基准网格的最大变化分别为 SS 0.014%、Gm 0.550%、阈值 0.100%。数据可追溯至 `results/tcad/reproduced/mesh_convergence/mesh_convergence.csv` 和各目录的 `sde_stdout.log`。
+
+### 9.3 剂量到固定电荷与界面态的转换
+
+紧凑模型给出 `Qot(D)`、`Qit(D)` 和摆幅通道的净界面密度电荷 `Qit,density(D)`。TCAD 输入按下式转换，剂量单位始终为 krad(Si)：
+
+```text
+Nfixed(D) = [Qot(D) + Qit(D)] / q                  [cm^-2]
+Dit(D)    = Dit0 + Qit,density(D) / q              [cm^-2 eV^-1]
+```
+
+`Nfixed` 进入 `FixedCharge Conc`；`Dit` 进入上下半带隙的 amphoteric Uniform 界面态。最终矩阵保持迁移率 21.4 cm²/Vs。
+
+| 剂量 (krad(Si)) | Nfixed (cm⁻²) | Dit (cm⁻²eV⁻¹) | 迁移率倍率 |
+| ---: | ---: | ---: | ---: |
+| 0 | 0 | 2.1000e13 | 1.0 |
+| 200 | 2.491485e12 | 2.035537e13 | 1.0 |
+| 500 | 3.874089e12 | 2.003054e13 | 1.0 |
+| 1000 | 5.409954e12 | 2.123879e13 | 1.0 |
+| 2000 | 7.554706e12 | 2.383170e13 | 1.0 |
+| 3000 | 9.184409e12 | 2.587630e13 | 1.0 |
+
+输入表由复现命令从 `configs/p0/cntfet_tid_p0.toml` 重新计算；每个 `final/dose_*/config.toml` 和 `sdevice_run.cmd` 保存实际代入值。
+
+### 9.4 零剂量与最终六剂量点对照
+
+零剂量基准网格上，SS、Gm、恒流阈值相对紧凑模型的偏差为 5.5%、2.6%、12.5%。
+
+![TCAD 零剂量对齐](figures/tcad/zero_dose_alignment.png)
+
+最终剂量矩阵采用“总有效固定电荷 + 剂量相关界面态 + 恒定迁移率”。下表各单元为 **TCAD / 文献**；Gm 单位为 µS，SS 单位为 mV/dec。
+
+| 剂量 (krad(Si)) | \|Vth\| (V) | Gm max (µS) | SS (mV/dec) | 三项最大相对偏差 |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 0.6068 / 0.5300 | 10.9637 / 10.6838 | 213.12 / 207.95 | 14.5% |
+| 200 | 0.8901 / 0.7995 | 10.0388 / 9.6460 | 209.69 / 185.39 | 13.1% |
+| 500 | 1.0516 / 1.0396 | 9.4463 / 8.6363 | 208.13 / 202.38 | 9.4% |
+| 1000 | 1.2693 / 1.1540 | 8.2934 / 7.3850 | 216.18 / 207.55 | 12.3% |
+| 2000 | 1.6095 / 1.4693 | 5.9002 / 5.2082 | 234.89 / 230.49 | 13.3% |
+| 3000 | 1.8959 / 1.6223 | 3.6460 / 4.1191 | 250.45 / 241.06 | 16.9% |
+
+六点共 18 项指标均小于 20%。全矩阵最大偏差为阈值 16.9%、Gm 13.3%、SS 13.1%。纯固定电荷模型的 Gm 最大偏差为 26.4%，加入剂量相关界面态后降至 13.3%。
+
+| 模型 | 阈值最大偏差 | Gm 最大偏差 | SS 最大偏差 |
+| --- | ---: | ---: | ---: |
+| 纯固定电荷，固定 Dit、恒定迁移率 | 14.5% | 26.4% | 15.6% |
+| 固定电荷 + 剂量相关 Dit、恒定迁移率 | 16.9% | 13.3% | 13.1% |
+
+![TCAD 六剂量点指标对照](figures/tcad/tid_metrics.png)
+
+![TCAD 六剂量点 Id–Vg 对照](figures/tcad/tid_idvg_overlay.png)
+
+表格数据源为 `results/tcad/reproduced/final/metrics.csv`，纯固定电荷对照为 `results/tcad/reproduced/fixed_charge/metrics.csv`，文献输入为 `data/literature/cui2023_topgate/fig3_metrics_digitized.csv`。曲线来自各剂量目录的 `run_des.plt` 和 `idvg_signed.csv`，配置、runtime deck 与结果文件的 SHA-256 汇总于 `results/tcad/reproduced/tcad_manifest.json`。
+
+### 9.5 TCAD 一键复现
+
+在 Sentaurus W-2024.09 虚拟机运行且 VMware Tools 可用时，在宿主机设置 `TCAD_VMRUN`、`TCAD_VMX`、`TCAD_GUEST_USER`、`TCAD_GUEST_PASSWORD`，执行：
+
+```bash
+cnt-tid tcad-reproduce --output results/tcad/reproduced --reference results/tcad
+```
+
+该命令依次重建零剂量、粗/细网格、五个纯固定电荷非零剂量点和五个最终联合模型非零剂量点，导出 `.plt`，提取指标并生成图表。`tcad_manifest.json` 记录命令、输入/输出路径及 SHA-256；`tcad_manifest_verification.json` 重新读取文件并核验哈希；`reference_comparisons` 保存复算结果与交互阶段核心 CSV 的哈希和数值对照。
+
+**本次冻结复跑证据（2026-11-18）**：命令耗时 217 s，7 个输入文件和 189 个输出文件的重新计算哈希全部匹配；零剂量对齐、网格汇总、纯固定电荷指标、最终联合指标四组核心 CSV 与交互阶段结果的 SHA-256 均完全相同，逐数值最大相对差为 0。复现 manifest 的 SHA-256 为 `a41cede219ae1b2ff0c3ec02c987d71d1dea36d2b08999e9031c7bce306cb134`。
+
+---
+
+## 10. 复现
 
 ```powershell
 # 1) 安装
@@ -352,11 +457,11 @@ cnt-tid p0
 
 环境：Python 3.12.10、numpy 2.5.5、scipy 1.18.1、pandas 3.1.1、matplotlib 3.11.2、PyMuPDF 2.1。配置指纹 `config_sha256 = 6259d2b2d79229832e181eb8c63bf59f634f6524a106742a484a09a81144217f`。
 
-质量门：`pytest` 64 项全过，`ruff check` 无告警；CI 覆盖 run / calibrate / sensitivity / matrix / p0 五条主流程。
+质量门：`pytest` 100 项全过，`ruff check` 无告警；CI 覆盖 run / calibrate / sensitivity / matrix / p0 主流程，TCAD 复现模块由单元测试与 W-2024.09 虚拟机端到端复跑共同验证。
 
 ---
 
-## 10. 局限与 P1 计划
+## 11. 局限与 P1 计划
 
 **已知局限（按影响排序）**
 
@@ -366,7 +471,7 @@ cnt-tid p0
 4. **缺少接触、量子电容、双极性分支**：论文曲线在正栅压侧的电流回升（双极性）未被紧凑模型包含，故 `Ioff` 与 `Ion` 只能作趋势比较。
 5. **跨结构参数不可移植**：第 7 节表明剂量律的指数随结构在 0.23–0.85 之间变化，跨结构迁移误差 2–5 倍。当前 P0 配置只对 Cui 2023 的顶栅器件有效，换结构必须重新标定。
 6. **器件间与工艺离散**：Kanhaiya 2021 给出 256 器件阵列的 95 % 置信区间，本项目的紧凑模型只拟合均值曲线，不含离散分布与剂量率依赖。（辐照后**时间退火**已作为假设情景引入，v0.11.0 §6.2；剂量率依赖仍缺失。）
-7. **TCAD 零剂量对齐待首跑**：`configs/tcad/cntfet_topgate.toml` 的 REQUIRED 已按溯源补齐（v0.7.1），deck 已生成；零偏差对齐（`cnt-tid tcad-align`，<20 % 门禁）需要用户在 SWB 虚拟机中完成首跑并回传 `.plt` 后才能闭环。
+7. **TCAD 全曲线标定待补数据**：零剂量 SDE/SDevice 首跑与三档网格检查已完成（2026-11-18），SS、Gm、恒流阈值偏差分别为 5.5 %、2.6 %、12.5 %，通过 <20 % 指标门禁。全曲线形状仍需论文图 2 的数字化数据检验。
 
 **P1 优先级**
 
@@ -375,13 +480,13 @@ cnt-tid p0
 | P1-1 | 补 n 型 CNTFET 的 TID 数据（实验或 TCAD） | n/p 比从假设变为拟合量 |
 | P1-2 | 数字化 Figure 2 的 6 条 Id–Vg 曲线（用户已指示暂不做论文图数字化；若做，沿用现有矢量法） | 全曲线残差 < 0.3 decade |
 | ~~P1-3~~ | ~~两阶段陷阱模型（建立 + 退火）~~ **已完成（v0.7.0）**：谷点残差 17.9 mV/dec ≈ 1.1σ，全点 ≤1.1σ | 已交付，见第 4/5 节 |
-| P1-4 | 用 SDE 结构卡生成 CNTFET 网格并与紧凑模型对齐零剂量（宿主机侧已就绪，v0.7.1） | SDevice 零剂量与紧凑模型偏差 < 20 %（待 SWB 首跑） |
+| ~~P1-4~~ | ~~用 SDE 结构卡生成 CNTFET 网格并与紧凑模型对齐零剂量~~ **已完成（2026-11-18）**：SS/Gm/阈值偏差 5.5 %/2.6 %/12.5 %，三档网格均通过 | 已交付，见 `results/tcad/zero_dose/` |
 | P1-5a | ~~环振频率退化~~ **已完成（v0.8.0）**：准静态 11 级环振，频率坍缩 10.6×、静态功耗 ×385（图 7） | 已交付，见第 6.1 节 |
 | P1-5b | 反相器混合模式瞬态（TCAD 侧） | 开关能量与延迟的精确分解 |
 
 ---
 
-## 11. 参考
+## 12. 参考
 
 1. Ding H., Cui J., Zheng Q., et al. *Effect of Trapped Charge Induced by Total Ionizing Dose Radiation on the Top-Gate Carbon Nanotube Field Effect Transistors.* Electronics **12**(4), 1000, 2023. [doi:10.3390/electronics12041000](https://doi.org/10.3390/electronics12041000)
 2. Lee C.-S., et al. *A Compact Virtual-Source Model for Carbon Nanotube FETs in the Sub-10-nm Regime.* IEEE TED, 2015. [doi:10.1109/TED.2015.2457424](https://doi.org/10.1109/TED.2015.2457424)

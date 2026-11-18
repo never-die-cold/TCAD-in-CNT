@@ -1,6 +1,6 @@
 # CNTFET TID：用户操作与数据溯源指南
 
-本文面向已经安装 Sentaurus W-2024.09 虚拟机、准备开始器件仿真的用户，说明从文献数据到 CNTFET TID 分析的操作流程。`tcad/cntfet/topgate/` 当前处于参数补齐阶段；工具链验证使用 `tcad/smoke/` 硅二极管工程。
+本文面向已经安装 Sentaurus W-2024.09 虚拟机、准备开始器件仿真的用户，说明从文献数据到 CNTFET TID 分析的操作流程。`tcad/cntfet/topgate/` 已完成零剂量首跑、三指标对齐和三档网格检查；工具链验证使用 `tcad/smoke/` 硅二极管工程。
 
 ## 1. 你和 Agent 分别做什么
 
@@ -142,7 +142,7 @@ cnt-tid tcad-align \
   --output results/tcad/zero_dose
 ```
 
-产物：`alignment_metrics.csv`（指标表）、`alignment_verdict.json`（判定）、`alignment_overlay.png`（叠加审计图）。偏差超限时的对齐旋钮：|Vth| → `gate_workfunction_ev`；SS → `run.interface_dit_cm2ev`（与 `cnt_nc300/nv300`）；Gm → `hole_mobility_cm2_vs`。每个旋钮的允许区间写在配置注释与 `device_parameters.csv` 中；改完重新 `cnt-tid tcad-prepare` 并重跑。首次运行请先核对 `sdevice_des.cmd` 中 Traps 界面态语法与所用版本手册一致。
+产物：`alignment_metrics.csv`（指标表）、`alignment_verdict.json`（判定）、`alignment_overlay.png`（叠加审计图）。偏差超限时的对齐旋钮：|Vth| → `gate_workfunction_ev`；SS → `run.interface_dit_cm2ev`（与 `cnt_nc300/nv300`）；Gm → `hole_mobility_cm2_vs`。每个旋钮的允许区间写在配置注释与 `device_parameters.csv` 中；改完重新 `cnt-tid tcad-prepare` 并重跑。`sdevice_des.cmd` 中的多陷阱语法已按 W-2024.09 SDevice User Guide 第 17 章核对，每个陷阱定义使用独立的内层括号。
 
 ## 7. 第五步：经你批准后才做 TID
 
@@ -156,7 +156,9 @@ Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
 
 `Conc` 的正负表示电荷符号。第一版使用总有效固定电荷，并单独比较跨导和摆幅退化；`Qot(D)` 与 `Qit(D)` 的拆分需要额外数据。
 
-你在 SWB 中先运行 200 和 500 krad(Si) 两个点，检查阈值漂移方向和收敛，再决定是否运行完整剂量矩阵。图 3c 的非单调摆幅采用额外机制或分段模型描述。
+六个剂量点已于 2026-11-18 全部完成。纯固定电荷模型保持零剂量界面态谱与迁移率不变，其阈值和 SS 最大偏差为 14.5 % 和 15.6 %，Gm 最大偏差为 26.4 %。结果见 `results/tcad/tid/`。
+
+最终联合模型采用**总有效固定电荷 + 剂量相关界面态密度 + 恒定迁移率**，结果见 `results/tcad/tid_degraded/`。六个剂量点的阈值、Gm、SS 相对文献最大偏差分别为 **16.9 %、13.3 %、13.1 %**，全部小于 20 %；Gm 最大偏差由纯固定电荷模型的 26.4 % 降至 13.3 %。直接照搬紧凑模型的迁移率退化会重复计算阈值位移造成的 Gm 下降，因此最终 TCAD 模型保持迁移率恒定。界面态采用两阶段生成/退火密度，200 krad 的摆幅下降趋势已体现，全曲线形状仍需图 2 数据检验。
 
 ## 8. 常见问题定位
 
@@ -172,4 +174,6 @@ Physics (MaterialInterface = "CNTNetwork/TopDielectric") {
 
 ## 9. 运行前提与下一步
 
-运行前提（v0.7.1 已就绪）：`configs/tcad/cntfet_topgate.toml` 的 REQUIRED 已全部按溯源补齐，deck 已由 `cnt-tid tcad-prepare` 生成于 `results/tcad/prepared/`（状态 `prepared_not_run`）。下一步：**把 deck 复制进 SWB 首跑零剂量（第 5 节），回传 `.plt` 后执行第 6.1 节的 `cnt-tid tcad-align` <20 % 门禁；偏差超限时按第 6.1 节的旋钮表调整后重跑。**
+零剂量阶段已于 2026-11-18 完成：SDE 生成 1405 点、2510 单元的基准网格，SDevice 日志包含 `Curve trace finished.` 和 `Sentaurus Device simulation finished`。`cnt-tid tcad-align` 的 SS、Gm、恒流阈值偏差分别为 **5.5 %、2.6 %、12.5 %**，全部通过 <20 % 门禁。粗（689 点）、基准（1405 点）、细（3029 点）三档网格均通过，指标相对基准网格最大变化 0.55 %。
+
+结果位于 `results/tcad/zero_dose/`，网格汇总位于 `results/tcad/mesh_convergence/mesh_convergence.csv`。当前配置状态为 `tcad_zero_dose_aligned_compact_metrics`；该验收覆盖三个提取指标，全曲线形状仍需图 2 数字化数据检验。六个剂量点的固定电荷及界面态联合矩阵已完成，三项指标均通过 20 % 文献对照。

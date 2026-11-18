@@ -20,7 +20,17 @@ cnt-tid tcad-smoke --output results/tcad-smoke
 
 ## CNTFET 工程状态与用户操作
 
-`tcad/cntfet/topgate/` 已建立面向 Cui 2023 P 型 CNT 网络器件的 SWB 模板。v0.7.1 起 `configs/tcad/cntfet_topgate.toml` 的全部 REQUIRED 已按溯源补齐（每个假设带区间，见 `data/literature/cui2023_topgate/device_parameters.csv` 新增行），`cnt-tid tcad-prepare` 已生成 deck（状态 `prepared_not_run`），下一步是用户在 SWB 中首跑零剂量，再经 `cnt-tid tcad-align` 与紧凑模型做 <20 % 的零剂量对齐验收。W-2024.09 不带 `CarbonNanotube`/`Graphene` 内置材料，因此模板使用本地 `datexcodes.txt` 定义有效 `CNTNetwork` 和 `TopDielectric`，所有输运参数必须显式提供。数据来源见 `data/literature/cui2023_topgate/source.md`，你在 SWB 中的逐步操作见 [CNTFET 用户指南](../docs/tcad-user-guide.md)。
+`tcad/cntfet/topgate/` 已建立面向 Cui 2023 P 型 CNT 网络器件的 SWB 模板，并在 W-2024.09 虚拟机完成零剂量 SDE/SDevice 首跑。基准网格的 SS、Gm、恒流阈值偏差为 5.5%、2.6%、12.5%，全部通过 `cnt-tid tcad-align` 的 <20 % 门禁；粗/基准/细三档网格均通过，关键指标相对基准网格最大变化 0.55%。零剂量结果位于 `results/tcad/zero_dose/` 和 `results/tcad/mesh_convergence/`。0–3000 krad(Si) 六剂量点矩阵已完成。纯固定电荷结果位于 `results/tcad/tid/`；最终的总有效固定电荷 + 剂量相关界面态模型位于 `results/tcad/tid_degraded/`，保持迁移率恒定。联合模型阈值、Gm、SS 相对文献最大偏差为 16.9 %、13.3 %、13.1 %，六点三指标均小于 20 %。W-2024.09 不带 `CarbonNanotube`/`Graphene` 内置材料，因此模板使用本地 `datexcodes.txt` 定义有效 `CNTNetwork` 和 `TopDielectric`，输运与接触参数显式提供。数据来源见 `data/literature/cui2023_topgate/source.md`，操作与验收记录见 [CNTFET 用户指南](../docs/tcad-user-guide.md)。
+
+## 一键复现与哈希清单
+
+虚拟机启动后，在宿主机设置与 `tcad-smoke` 相同的 VMware 连接变量，并运行：
+
+```bash
+cnt-tid tcad-reproduce --output results/tcad/reproduced --reference results/tcad
+```
+
+流程重建零剂量、三档网格、纯固定电荷矩阵和最终联合矩阵，保存每点配置、实际运行的 `sde_run.cmd`/`sdevice_run.cmd`、原生日志、`.plt`、CSV 和图表。`tcad_manifest.json` 记录配置、deck、文献输入和结果 SHA-256；`tcad_manifest_verification.json` 保存重新计算哈希的核验结果，`reference_comparisons` 记录与交互阶段结果的哈希及数值一致性。原生网格 `.tdr` 保留在虚拟机 `/home/tcad/STDB/cnt_tid_reproduce/` 下。
 
 ## 推荐实现顺序
 

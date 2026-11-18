@@ -12,8 +12,14 @@
 (define Ybottom (+ Ysub Tsub))
 
 (sdegeo:create-rectangle
-  (position (- 0 LeS) 0 0) (position (+ Lg LeD) Tcnt 0)
+  (position (- 0 LeS) 0 0) (position 0 Tcnt 0)
+  "CNTNetwork" "source_extension")
+(sdegeo:create-rectangle
+  (position 0 0 0) (position Lg Tcnt 0)
   "CNTNetwork" "channel")
+(sdegeo:create-rectangle
+  (position Lg 0 0) (position (+ Lg LeD) Tcnt 0)
+  "CNTNetwork" "drain_extension")
 (sdegeo:create-rectangle
   (position (- 0 LeS) (- 0 Ttop) 0) (position 0 0 0)
   "TopDielectric" "top_dielectric_source")
@@ -31,13 +37,20 @@
   "Silicon" "substrate")
 
 (sdegeo:set-contact
-  (list (car (find-face-id (position (- 0 LeS) (/ Tcnt 2) 0)))) "source")
+  (list (car (find-edge-id (position (- 0 LeS) (/ Tcnt 2) 0)))) "source")
 (sdegeo:set-contact
-  (list (car (find-face-id (position (+ Lg LeD) (/ Tcnt 2) 0)))) "drain")
+  (list (car (find-edge-id (position (+ Lg LeD) (/ Tcnt 2) 0)))) "drain")
 (sdegeo:set-contact
-  (list (car (find-face-id (position (/ Lg 2) (- 0 Ttop) 0)))) "gate")
+  (list (car (find-edge-id (position (/ Lg 2) (- 0 Ttop) 0)))) "gate")
 (sdegeo:set-contact
-  (list (car (find-face-id (position (/ Lg 2) Ybottom 0)))) "backgate")
+  (list (car (find-edge-id (position (/ Lg 2) Ybottom 0)))) "backgate")
+
+(sdedr:define-constant-profile "source_drain_acceptors"
+  "BoronActiveConcentration" @MATERIAL_SOURCE_DRAIN_DOPING_CM3@)
+(sdedr:define-constant-profile-region "source_extension_doping"
+  "source_drain_acceptors" "source_extension")
+(sdedr:define-constant-profile-region "drain_extension_doping"
+  "source_drain_acceptors" "drain_extension")
 
 (sdedr:define-refinement-size "global"
   @MESH_GLOBAL_MAX_UM@ @MESH_GLOBAL_MAX_UM@ @MESH_GLOBAL_MIN_UM@ @MESH_GLOBAL_MIN_UM@)

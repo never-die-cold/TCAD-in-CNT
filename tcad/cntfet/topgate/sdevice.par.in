@@ -20,6 +20,9 @@ Material = "CNTNetwork" {
   ConstantMobility {
     mumax = @MATERIAL_ELECTRON_MOBILITY_CM2_VS@, @MATERIAL_HOLE_MOBILITY_CM2_VS@
   }
+  Scharfetter {
+    taumax = @MATERIAL_ELECTRON_SRH_LIFETIME_S@, @MATERIAL_HOLE_SRH_LIFETIME_S@
+  }
 }
 
 Material = "TopDielectric" {

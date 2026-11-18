@@ -37,12 +37,22 @@ def test_complete_config_renders_all_templates_with_provenance(tmp_path: Path) -
     }
     for path in result.generated_files:
         assert path.is_file()
-    assert "@GEOMETRY_" not in (result.output_dir / "sde_dvs.cmd").read_text(
-        encoding="utf-8"
-    )
-    assert "@RUN_INTERFACE_DIT_CM2EV@" not in (
-        result.output_dir / "sdevice_des.cmd"
-    ).read_text(encoding="utf-8")
+    sde = (result.output_dir / "sde_dvs.cmd").read_text(encoding="utf-8")
+    assert "@GEOMETRY_" not in sde
+    assert sde.count("find-edge-id") == 4
+    assert "find-face-id" not in sde
+    assert '"BoronActiveConcentration" 3e+19' in sde
+    assert sde.count('source_drain_acceptors"') == 3
+    sdevice = (result.output_dir / "sdevice_des.cmd").read_text(encoding="utf-8")
+    assert "@RUN_INTERFACE_DIT_CM2EV@" not in sdevice
+    assert "(Conc = 0.0 FixedCharge)" in sdevice
+    assert "(Donor Uniform EnergyMid = -0.125 EnergySig = 0.25" in sdevice
+    assert "(Acceptor Uniform EnergyMid = 0.125 EnergySig = 0.25" in sdevice
+    assert sdevice.count("fromMidBandGap") == 2
+    assert "EffectiveIntrinsicDensity(NoBandGapNarrowing)" in sdevice
+    assert sdevice.count("Schottky Workfunction = 5.1") == 2
+    parameters = (result.output_dir / "sdevice.par").read_text(encoding="utf-8")
+    assert "taumax = 1e-05, 3e-06" in parameters
     metadata = json.loads(
         (result.output_dir / "tcad_project_metadata.json").read_text(encoding="utf-8")
     )

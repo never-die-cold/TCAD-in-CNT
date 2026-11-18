@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "version": "v0.13.0",
+  "created_utc": "2026-11-18T02:16:22.474247+00:00",
+  "evidence_level": "literature-calibrated consistency validation, not independent predictive validation",
+  "reproduction": {
+    "command": "cnt-tid tcad-reproduce --output results/tcad/reproduced --reference results/tcad",
+    "manifest": "results/tcad/reproduced/tcad_manifest.json",
+    "manifest_sha256": "a41cede219ae1b2ff0c3ec02c987d71d1dea36d2b08999e9031c7bce306cb134",
+    "input_file_count": 7,
+    "output_file_count": 189,
+    "all_hashes_match": true,
+    "reference_csv_sha256_match": {
+      "zero_dose/alignment_metrics.csv": true,
+      "mesh_convergence/mesh_convergence.csv": true,
+      "fixed_charge/metrics.csv": true,
+      "final/metrics.csv": true
+    },
+    "reference_csv_max_relative_difference": {
+      "zero_dose/alignment_metrics.csv": 0.0,
+      "mesh_convergence/mesh_convergence.csv": 0.0,
+      "fixed_charge/metrics.csv": 0.0,
+      "final/metrics.csv": 0.0
+    }
+  },
+  "quality_gates": {
+    "pytest": {
+      "command": ".venv/Scripts/python.exe -m pytest -q",
+      "result": "100 passed, 8 warnings",
+      "log": "results/deliverable/tcad_v0.13.0_verification/pytest.log",
+      "log_sha256": "28e4f165e323c672d25bb375e1847d988035814051eb7ddb4b63e4cebea437df"
+    },
+    "ruff": {
+      "command": ".venv/Scripts/python.exe -m ruff check src tests",
+      "result": "All checks passed",
+      "log": "results/deliverable/tcad_v0.13.0_verification/ruff.log",
+      "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    }
+  },
+  "archive": {
+    "path": "results/deliverable/tcad_v0.13.0_artifacts.zip",
+    "sha256": "d50f1dacb743f7f3335a0924537b95a3d33108d629ebd524d49e158774889af7",
+    "integrity_test": "ZipFile.testzip: passed; repository-relative paths verified",
+    "contents": [
+      "results/tcad/reproduced",
+      "docs/figures/tcad",
+      "docs/p0-report.md",
+      "results/deliverable/tcad_v0.13.0_verification"
+    ]
+  },
+  "optional_figure_2_digitization": "not run; non-blocking enhancement"
+}
