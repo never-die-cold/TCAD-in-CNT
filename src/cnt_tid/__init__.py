@@ -1,6 +1,6 @@
 """CNTFET total-ionizing-dose simulation baseline."""
 
-__version__ = "0.13.0"
+__version__ = "1.0.0"
 
 from .calibration import CalibrationResult, calibrate, load_measurements
 from .config import DeviceConfig, SimulationConfig, load_config

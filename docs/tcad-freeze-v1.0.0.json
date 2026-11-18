@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "version": "v0.13.0",
-  "created_utc": "2026-11-18T02:16:22.474247+00:00",
+  "version": "v1.0.0",
+  "created_utc": "2026-11-18T02:27:08.680623+00:00",
   "evidence_level": "literature-calibrated consistency validation, not independent predictive validation",
   "reproduction": {
     "command": "cnt-tid tcad-reproduce --output results/tcad/reproduced --reference results/tcad",
@@ -27,25 +27,25 @@
     "pytest": {
       "command": ".venv/Scripts/python.exe -m pytest -q",
       "result": "100 passed, 8 warnings",
-      "log": "results/deliverable/tcad_v0.13.0_verification/pytest.log",
-      "log_sha256": "28e4f165e323c672d25bb375e1847d988035814051eb7ddb4b63e4cebea437df"
+      "log": "results/deliverable/tcad_v1.0.0_verification/pytest.log",
+      "log_sha256": "297f7ebdbe3c6bbac5812db430a1f5c20503d308943ca92cc25bcb7f3f12775f"
     },
     "ruff": {
       "command": ".venv/Scripts/python.exe -m ruff check src tests",
       "result": "All checks passed",
-      "log": "results/deliverable/tcad_v0.13.0_verification/ruff.log",
+      "log": "results/deliverable/tcad_v1.0.0_verification/ruff.log",
       "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
     }
   },
   "archive": {
-    "path": "results/deliverable/tcad_v0.13.0_artifacts.zip",
-    "sha256": "d50f1dacb743f7f3335a0924537b95a3d33108d629ebd524d49e158774889af7",
+    "path": "results/deliverable/tcad_v1.0.0_artifacts.zip",
+    "sha256": "647b6840cf1038e3d1bd7c97d9cf8c543fcb586b2d7da2392e1a4bdeacb6459b",
     "integrity_test": "ZipFile.testzip: passed; repository-relative paths verified",
     "contents": [
       "results/tcad/reproduced",
       "docs/figures/tcad",
       "docs/p0-report.md",
-      "results/deliverable/tcad_v0.13.0_verification"
+      "results/deliverable/tcad_v1.0.0_verification"
     ]
   },
   "optional_figure_2_digitization": "not run; non-blocking enhancement"

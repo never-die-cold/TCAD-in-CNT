@@ -1,6 +1,6 @@
 # P0 结项报告：文献锚定的 CNTFET 总剂量效应紧凑模型
 
-**版本** v0.13.0 · **结项日期** 2026-11-18 · **剂量单位** krad(Si)
+**版本** v1.0.0 · **结项日期** 2026-11-18 · **剂量单位** krad(Si)
 
 ---
 
@@ -49,7 +49,7 @@ P0 的五项要求已经形成一个闭环，且每一环都能被独立复算�
 | 标定与敏感性分析 | 残差、留一验证、OAT 龙卷风、假设区间 | `results/p0/calibration/`、`results/p0/sensitivity/`、`results/p0/robustness/`、图 2/4/5 |
 | 可复现代码与结项图表 | 单一命令重建 + SHA-256 清单 + 测试 | `cnt-tid p0`、`results/p0/manifest.json`、`docs/figures/p0/` |
 | 参数的适用范围（附加） | 跨 2 篇文献、7 个器件变体的剂量律对比与迁移误差 | `results/p0/cross_source/`、图 6、第 7 节 |
-| TCAD 一致性验证（v0.13.0） | 零剂量、三档网格、六剂量点双模型、原生日志与 SHA-256 清单 | `cnt-tid tcad-reproduce`、`results/tcad/reproduced/`、第 9 节 |
+| TCAD 一致性验证（v1.0.0） | 零剂量、三档网格、六剂量点双模型、原生日志与 SHA-256 清单 | `cnt-tid tcad-reproduce`、`results/tcad/reproduced/`、第 9 节 |
 
 ---
 
